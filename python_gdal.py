@@ -636,17 +636,17 @@ def plot_history(network):
 
 # # Over-sampling ways
 # random oversampling ways
-def ros(x_train, y_train):
-    over = RandomOverSampler()
-    x_train_over, y_train_over = over.fit_sample(x_train, y_train)
-    return x_train_over, y_train_over
+# def ros(x_train, y_train):
+#     over = RandomOverSampler()
+#     x_train_over, y_train_over = over.fit_sample(x_train, y_train)
+#     return x_train_over, y_train_over
 
 
-# SMOTE Ways
-def smote(x_train, y_train):
-    over1 = SMOTE()
-    x_train_over1, y_train_over1 = over1.fit_sample(x_train, y_train)
-    return x_train_over1, y_train_over1
+# # SMOTE Ways
+# def smote(x_train, y_train):
+#     over1 = SMOTE()
+#     x_train_over1, y_train_over1 = over1.fit_sample(x_train, y_train)
+#     return x_train_over1, y_train_over1
 
 
 def txt2xls(txt_path, xls_path, column):
