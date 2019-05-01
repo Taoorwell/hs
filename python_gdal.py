@@ -304,41 +304,6 @@ def write_train_region_predicts(model, data_path, train_data_path,
     # write_classification_result3(predicts, train_data_path, shape)
 
 
-# read classification needed for classify and m is also block size.
-# When m == 1: classification_samples return array of shape is (cols*rows,bands)
-# When m == block_size: classification_samples return array of shape is (cols*rows,m,m,bands)
-# def get_classification_samples(data_path, m=1, norma_methods="z-score", pca=False):
-#     if data_path.endswith('.tif'):
-#         rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(data_path)
-#     else:
-#         bands_data_dict = sio.loadmat(data_path)
-#         bands_data = bands_data_dict[list(bands_data_dict.keys())[-1]]
-#     n = int((m - 1) / 2)
-#     bands_data = norma_data(bands_data, norma_methods=norma_methods)
-#     if pca is True:
-#         bands_data = pca_data(bands_data)
-#     classification_samples = []
-#     if m == 1:
-#         for i in range(0, bands_data.shape[0], 1):
-#             for j in range(0, bands_data.shape[1], 1):
-#                 data = bands_data[i, j]
-#                 classification_samples.append(data)
-#     else:
-#         bands_data = np.pad(bands_data, ((n, n), (n, n), (0, 0)), 'constant', constant_values=0)
-#         rows = bands_data.shape[0]-2*n
-#         cols = bands_data.shape[1]-2*n
-#         for i in range(0, rows, 1):
-#             for j in range(0, cols, 1):
-#                     data = bands_data[i: i + m, j: j + m, :]
-#                     classification_samples.append(data)
-#     classification_samples = np.stack(classification_samples, axis=0)
-#     return classification_samples
-#
-#
-# # write the result of classification to .tiff file.
-# # the rows, cols and geo transform is different according to m.
-
-
 def get_fusion_features_from_test(model1, model2, data_path, train_data_path, c, lists, m):
     extractor_from_model1, extractor_from_model2 = feature_extractor(model1, model2)
     bands_data, is_train, train_labels = get_prep_data(data_path, train_data_path)
@@ -604,32 +569,6 @@ def plot_history(network):
     plt.plot(network.history["val_acc"])
     plt.legend(["Training", "Validation"])
     plt.show()
-
-
-# # according to lists of labels, custom train and test samples form given labeled data.
-# # parameter: training_labels training_samples obtained from bands_data, c is classed, lists is custom setting.
-# # np.random.seed(10) 10 or another value is for fixing output each run.
-# def custom_train_sample(training_labels, training_samples, c, lists):
-#     np.random.seed(10)
-#     x_train, x_test, y_train, y_test = [], [], [], []
-#     for i, n in zip(range(1, c+1, 1), lists):
-#         i_index = [j for j, x in enumerate(training_labels) if x == i]
-#         i_index_random = np.random.choice(i_index, n, replace=False)
-#         i_rest_index = [k for k in i_index if k not in i_index_random]
-#         i_sample_random = training_samples[i_index_random]
-#         i_rest_sample = training_samples[i_rest_index]
-#         x_train.append(i_sample_random)
-#         y_train.append(np.ones(len(i_index_random))*i)
-#         x_test.append(i_rest_sample)
-#         y_test.append(np.ones(len(i_rest_index))*i)
-#     x_train = np.concatenate(x_train, axis=0)
-#     y_train = np.concatenate(y_train, axis=0)
-#     x_test = np.concatenate(x_test, axis=0)
-#     y_test = np.concatenate(y_test, axis=0)
-#     x_train, _, y_train, _ = train_test_split(x_train, y_train, test_size=0, shuffle=True)
-#     x_test, _, y_test, _ = train_test_split(x_test, y_test, test_size=0, shuffle=True)
-#     return x_train, x_test, y_train, y_test
-
 
 # # increase plotting result function more.....
 
