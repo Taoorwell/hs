@@ -44,9 +44,31 @@ name = ["cnn_2d_pca_IP.h5", "cnn_2d_pca_P.h5", "cnn_2d_pca_PU.h5", "cnn_2d_pca_K
 model1 = ["cnn_1d_IP.h5", "cnn_1d_P.h5", "cnn_1d_PU.h5", "cnn_1d_KSC.h5"]
 model2 = ["29-cnn_2d_IP.h5", "29-cnn_2d_P.h5", "29-cnn_2d_PU.h5", "29-cnn_2d_KSC.h5"]
 # m = 29
-i = 2
-model_list = os.listdir("E:/HSI/code/new_model_0")
-print(model_list)
+# i = 2
+path = "E:/HSI/code/new_model_2/"
+save_path = "E:/HSI/code/predicts_mat/"
+model_list = os.listdir(path)
+model_path = [path + x for x in model_list]
+# print(model_path)
+for j in model_path:
+    print(j)
+    model = load_model(j)
+    l1 = j.split('/')[-1].split('_')[-1].split('.')[0]
+    print(l1)
+    if l1 == 'IP':
+        i = 0
+    elif l1 == 'P':
+        i = 1
+    elif l1 == 'PU':
+        i = 2
+    else:
+        i = 3
+    m = int(j.split('/')[-1].split('-')[0])
+    predicts = write_out_whole_predicts(model, MAIN_FOLDER+DATA_PATH[i], bsize=3200, m=m)
+    filename = j.split('/')[-1].split('.')[0] + '.mat'
+    save_array_to_mat(predicts, filename=save_path + filename)
+    print(filename + ' save successful')
+
 # (1096, 715), (145, 145), (512, 217), (512, 614)
 # # #
 # train_samples_1, train_labels_1 = get_train_sample(data_path=MAIN_FOLDER+DATA_PATH[i],
@@ -128,6 +150,14 @@ print(model_list)
 # predicts = predicts["pre"]
 # write_whole_image_classification_result(predicts, image_shape[i])
 # write_whole_image_predicts_prob(predicts, image_shape[i])
+
+
+# mat_path = [save_path + x for x in os.listdir(save_path)]
+# print(mat_path)
+# for j in mat_path:
+#     pred = sio.loadmat(j)
+#     pre = pred['pre']
+#     print(pre.shape)
 
 
 
