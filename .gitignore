@@ -1,2 +1,3 @@
 .idea/
 *.tfrecord
+.ipynb_checkpoints/
