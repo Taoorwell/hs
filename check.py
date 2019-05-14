@@ -158,6 +158,3 @@ for j in model_path:
 #     pred = sio.loadmat(j)
 #     pre = pred['pre']
 #     print(pre.shape)
-
-
-
