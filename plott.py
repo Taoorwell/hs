@@ -1,11 +1,18 @@
 import pandas as pd
+import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+# plt.rcParams['font.sans-serif'] = ['SimHei']
+plt.rc('font', family='serif')
+plt.rc('xtick', labelsize='x-small')
+plt.rc('ytick', labelsize='x-small')
+# plt.rcParams['axes.unicode_minus'] = False
+# myfont = matplotlib.font_manager.FontProperties(fname='C:/Windows/Fonts/simsun.ttc')
 
-file_path = "file.xlsx"
+file_path = "E:/HSI/code/out_files/file.xlsx"
 df = pd.read_excel(file_path)
-fig = plt.figure(num=0, figsize=(8, 4))
+fig = plt.figure(num=0, figsize=(6, 4), dpi=300)
 # # B & M & IP_PCA DATA
 # print(df_ip_pca)
 # # IP & CNN_2D
@@ -34,17 +41,39 @@ r1 = np.arange(0, 4, 1)
 r2 = [x + barWidth for x in r1]
 # r3 = [x + barWidth for x in r2]
 # r4 = [x + barWidth for x in r3]
-
-plt.bar(r1, bar11, color='red', width=barWidth, edgecolor='white', label='CNN_1D', alpha=0.5)
+plt.subplot(121)
+plt.bar(r1, bar11, color='red', width=barWidth, edgecolor='black', label='1D CNN', alpha=0.8)
 # plt.bar(r1, bar11, color='red', width=barWidth, edgecolor='white', alpha=0.5)
 # plt.bar(r2, bar2, color='blue', width=barWidth, edgecolor='white', alpha=0.5)
-plt.bar(r2, bar22, color='blue', width=barWidth, edgecolor='white', label='MLP', alpha=0.5)
+plt.bar(r2, bar22, color='cyan', width=barWidth, edgecolor='black', label='MLP', alpha=0.5)
 
-plt.xlabel('DATA', fontweight='bold')
-plt.ylabel("KAPPA", fontweight='bold')
-plt.xticks([r+0.15 for r in np.arange(0, 4, 1)], ["IP", "KSC", "P", "PU"])
+# plt.xlabel(u'数据集', fontsize=8)
+# plt.xlabel('DATA', fontweight='bold')
+# plt.ylabel("KAPPA", fontweight='bold')
+plt.ylabel("Kappa Coefficient", fontsize=8)
+
+plt.xticks([r+0.15 for r in np.arange(0, 4, 1)], ["IP", "KSC", "PC", "PU"],
+           fontsize=8)
+plt.yticks(fontsize=8)
 plt.ylim(0.5, 1.0)
-plt.legend(loc=2, prop={'size': 8})
+plt.legend(loc=2, prop={'size': 5})
+
+plt.subplot(122)
+plt.bar(r1, bar1, color='red', width=barWidth, edgecolor='black', label='1D CNN', alpha=0.8)
+# plt.bar(r1, bar11, color='red', width=barWidth, edgecolor='white', alpha=0.5)
+# plt.bar(r2, bar2, color='blue', width=barWidth, edgecolor='white', alpha=0.5)
+plt.bar(r2, bar2, color='cyan', width=barWidth, edgecolor='black', label='MLP', alpha=0.5)
+
+# plt.xlabel(u'数据集', fontsize=8)
+# plt.xlabel('DATA', fontweight='bold')
+# plt.ylabel("KAPPA", fontweight='bold')
+plt.ylabel("Overall Accuracy", fontsize=8)
+
+plt.xticks([r+0.15 for r in np.arange(0, 4, 1)], ["IP", "KSC", "PC", "PU"],
+           fontsize=8)
+plt.yticks(fontsize=8)
+plt.ylim(0.50, 1.00)
+plt.legend(loc=2, prop={'size': 5})
 
 plt.show()
 
@@ -134,7 +163,7 @@ plt.show()
 #     ax.set_zlabel(index[j], fontsize=8)
 # ax.set_zlim()
 
-plt.show()
+# plt.show()
 
 # fig = plt.figure(figsize=(10, 5))
 # # ax = Axes3D(fig)
