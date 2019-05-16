@@ -12,12 +12,12 @@ import pandas as pd
 import seaborn as sn
 import matplotlib.pyplot as plt
 import os
-from osgeo import gdal
+# from osgeo import gdal
 import scipy.io as sio
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report, f1_score, cohen_kappa_score, accuracy_score
-from imblearn.over_sampling import RandomOverSampler, BorderlineSMOTE, SMOTE
+# from imblearn.over_sampling import RandomOverSampler, BorderlineSMOTE, SMOTE
 from models_keras import *
 # Functions of Gdal
 # get raster data info, included rows, cols, n_bands, bands_data(read by band and shape is (W,H,C)),
