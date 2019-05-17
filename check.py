@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from models_keras import *
 
 # # Data Preparation
-MAIN_FOLDER = r'F:paper/HSI/'
+MAIN_FOLDER = r'E:/HSI/'
 IP_DATA_PATH = 'IP/Indian_pines_corrected'
 IP_TRAIN_PATH = 'IP/Indian_pines_gt'
 PAVIA_DATA_PATH = "Pavia/Pavia"
@@ -44,16 +44,20 @@ name = ["cnn_2d_pca_IP.h5", "cnn_2d_pca_P.h5", "cnn_2d_pca_PU.h5", "cnn_2d_pca_K
 model1 = ["cnn_1d_IP.h5", "cnn_1d_P.h5", "cnn_1d_PU.h5", "cnn_1d_KSC.h5"]
 model2 = ["29-cnn_2d_IP.h5", "29-cnn_2d_P.h5", "29-cnn_2d_PU.h5", "29-cnn_2d_KSC.h5"]
 # m = 29
-i = 30
-path = "F:/paper/HSI/code/new_model_2/"
+j = 5
+i = -1
+path = "E:/HSI/code/new_model_0/"
 save_path = "F:/paper/HSI/code/predicts_mat/"
 model_list = os.listdir(path)
 model_path = [path + x for x in model_list]
-print(model_path[i])
-model = load_model(model_path[i])
-config = model.get_config()
-for k in config['layers']:
-    print(k['config'])
+print(model_path[j])
+model = load_model(model_path[j])
+get_test_predict(model, data_path=MAIN_FOLDER+DATA_PATH[i], train_data_path=MAIN_FOLDER+TRAIN_PATH[i],
+                 c=c[i], lists=lists[i], bsize=3200)
+
+# config = model.get_config()
+# for k in config['layers']:
+#     print(k['config'])
 # print(config['layers'][1])
 # for j in model_path:
 #     print(j)

@@ -12,7 +12,7 @@ import pandas as pd
 import seaborn as sn
 import matplotlib.pyplot as plt
 import os
-# from osgeo import gdal
+from osgeo import gdal
 import scipy.io as sio
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
@@ -22,6 +22,7 @@ from models_keras import *
 # Functions of Gdal
 # get raster data info, included rows, cols, n_bands, bands_data(read by band and shape is (W,H,C)),
 # projection and geo transformation.
+plt.rc('font', family='serif')
 
 
 def get_raster_info(raster_data_path):
@@ -427,27 +428,29 @@ def write_whole_image_classification_result(predict, shape):
         m = arr_2d == c
         arr_3d[m] = i
     plt.imshow(arr_3d)
-    plt.show()
+    plt.xticks([])
+    plt.yticks([])
+    # plt.show()
 
 
 def write_whole_image_predicts_prob(predict, shape):
     max_prob = np.max(predict, axis=1)
-    mean_prob = np.mean(predict, axis=1)
-    sec_max = []
-    for p in predict:
-        p = sorted(p)
-        second = p[-2]
-        sec_max.append(second)
-    conf1 = max_prob - sec_max
-    conf2 = max_prob - mean_prob
-    low_confidence0 = [x for x in max_prob if x < 0.5]
-    low_confidence1 = [x for x in conf1 if x < 0.5]
-    low_confidence2 = [x for x in conf2 if x < 0.5]
-    cof1 = len(low_confidence0)/(shape[0]*shape[1])
-    cof2 = len(low_confidence1)/(shape[0]*shape[1])
-    cof3 = len(low_confidence2)/(shape[0]*shape[1])
+    # mean_prob = np.mean(predict, axis=1)
+    # sec_max = []
+    # for p in predict:
+    #     p = sorted(p)
+    #     second = p[-2]
+    #     sec_max.append(second)
+    # conf1 = max_prob - sec_max
+    # conf2 = max_prob - mean_prob
+    # low_confidence0 = [x for x in max_prob if x < 0.5]
+    # low_confidence1 = [x for x in conf1 if x < 0.5]
+    # low_confidence2 = [x for x in conf2 if x < 0.5]
+    # cof1 = len(low_confidence0)/(shape[0]*shape[1])
+    # cof2 = len(low_confidence1)/(shape[0]*shape[1])
+    # cof3 = len(low_confidence2)/(shape[0]*shape[1])
     # print("cof1:{}, cof2:{}, cof3: {}".format(cof1, cof2, cof3))
-    # prob_img = np.reshape(conf, shape)
+    prob_img = np.reshape(max_prob, shape)
     # fig = plt.figure()
     # fig.add_subplot(121)
     # plt.xlabel("Confidences")
@@ -456,10 +459,21 @@ def write_whole_image_predicts_prob(predict, shape):
     #
     # fig.add_subplot(122)
     # sn.heatmap(prob_img, annot=False, cmap="Greys_r", xticklabels=False, yticklabels=False)
-    # plt.imshow(prob_img, cmap='gray')
+    plt.imshow(prob_img, cmap='gray')
+    # plt.axis('off')
     #
     # plt.show()
-    return cof1, cof2, cof3
+    # return cof1
+
+
+def write_whole_image_predicts_prob1(predict, shape):
+    max_prob = np.max(predict, axis=1)
+    low_confidence0 = [x for x in max_prob if x < 0.5]
+    cof1 = len(low_confidence0)/(shape[0]*shape[1])
+    plt.hist(max_prob, bins=10, range=(0, 0.5), facecolor='red', alpha=0.5)
+    plt.xticks([0.1, 0.2, 0.3, 0.4, 0.5])
+    return cof1
+    # plt
 
 
 # # write out labeled data given to RGB
@@ -468,10 +482,13 @@ def write_region_image_classification_result(predict, train_data_path, shape):
     labeled_pixel_dict = sio.loadmat(train_data_path)
     labeled_pixel = labeled_pixel_dict[list(labeled_pixel_dict.keys())[-1]]
     is_train = np.nonzero(labeled_pixel)
+    # predict = predict[is_train]
     if predict.ndim == 2:
         labels = np.argmax(predict, axis=-1) + 1
     else:
         labels = predict
+    labels = np.reshape(labels, shape)
+    labels = labels[is_train]
     label = np.zeros(shape)
     for i, j, k in zip(is_train[0], is_train[1], labels):
         label[i, j] = k
@@ -481,7 +498,9 @@ def write_region_image_classification_result(predict, train_data_path, shape):
         m = arr_2d == c
         arr_3d[m] = i
     plt.imshow(arr_3d)
-    plt.show()
+    plt.xticks([])
+    plt.yticks([])
+    # plt.show()
 
 
 def print_plot_cm(y_true, y_pred):
@@ -493,13 +512,18 @@ def print_plot_cm(y_true, y_pred):
     KAPPA = cohen_kappa_score(y_true, y_pred)
     # print("Overall Accuracy:{:.4%}".format(OA))
     # print("Kappa: ", KAPPA)
-    # print(classification_report(y_true, y_pred, digits=4))
-    # labels = sorted(list(set(y_true)))
-    # cm_data = confusion_matrix(y_true, y_pred, labels=labels)
+    print(classification_report(y_true, y_pred, digits=4))
+    labels = [int(x) for x in sorted(list(set(y_true)))]
+    cm_data = confusion_matrix(y_true, y_pred, labels=labels)
+    cm_data1 = cm_data.astype('float') / cm_data.sum(axis=1)[:, np.newaxis]
     # df_cm = pd.DataFrame(cm_data, index=labels, columns=labels)
-    # plt.figure(figsize=(10, 7))
+    df_cm1 = pd.DataFrame(cm_data1, index=labels, columns=labels)
+    plt.figure(figsize=(12, 6))
+    # plt.subplot(121)
     # sn.heatmap(df_cm, annot=True, cmap=plt.cm.Blues, fmt='0000')
-    # plt.show()
+    # plt.subplot(122)
+    sn.heatmap(df_cm1, annot=True, cmap=plt.cm.Blues, fmt='.2f')
+    plt.show()
     return OA, KAPPA
 
 
@@ -536,7 +560,9 @@ def norma_data(data, norma_methods="z-score"):
         if norma_methods == "z-score":
             new_array = (array-norma_info1[2])/norma_info1[3]
         else:
-            new_array = (2*(array-norma_info1[0])/(norma_info1[1]-norma_info1[0]))-1
+            new_array = (array-norma_info1[0])/(norma_info1[1]-norma_info1[0])
+# new_array = (2*(array-norma_info1[0])/(norma_info1[1]-norma_info1[0]))-1
+
         new_data.append(new_array)
     new_data = np.stack(new_data, axis=-1)
     # # for save half memory!
