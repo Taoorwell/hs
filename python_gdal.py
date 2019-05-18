@@ -12,13 +12,13 @@ import pandas as pd
 import seaborn as sn
 import matplotlib.pyplot as plt
 import os
-from osgeo import gdal
+# from osgeo import gdal
 import scipy.io as sio
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report, f1_score, cohen_kappa_score, accuracy_score
 # from imblearn.over_sampling import RandomOverSampler, BorderlineSMOTE, SMOTE
-from models_keras import *
+# from models_keras import *
 # Functions of Gdal
 # get raster data info, included rows, cols, n_bands, bands_data(read by band and shape is (W,H,C)),
 # projection and geo transformation.
@@ -458,8 +458,8 @@ def write_whole_image_predicts_prob(predict, shape):
     # plt.hist(conf, bins=10, range=(0, 1), facecolor='red', alpha=0.5)
     #
     # fig.add_subplot(122)
-    # sn.heatmap(prob_img, annot=False, cmap="Greys_r", xticklabels=False, yticklabels=False)
-    plt.imshow(prob_img, cmap='gray')
+    sn.heatmap(prob_img, annot=False, cmap="Greys_r", xticklabels=False, yticklabels=False)
+    # plt.imshow(prob_img, cmap='gray')
     # plt.axis('off')
     #
     # plt.show()

@@ -10,7 +10,8 @@ plt.rc('ytick', labelsize='x-small')
 # plt.rcParams['axes.unicode_minus'] = False
 # myfont = matplotlib.font_manager.FontProperties(fname='C:/Windows/Fonts/simsun.ttc')
 
-file_path = "E:/HSI/code/out_files/file.xlsx"
+# file_path = "E:/HSI/code/out_files/file.xlsx"
+file_path = 'F:/paper/HSI/code/out_files/file0.xlsx'
 df = pd.read_excel(file_path)
 fig = plt.figure(num=0, figsize=(6, 4), dpi=300)
 # # B & M & IP_PCA DATA
@@ -21,54 +22,58 @@ fig = plt.figure(num=0, figsize=(6, 4), dpi=300)
 
 
 ###########################################################################################################
-# # # CNN_1D & MLP
+# # CNN_1D & MLP
 # df_1d = df[df['Model_Category'] == 'CNN_1D']
+df_1d = df[(df['Model_Category'] == 'CNN_1D') & (df['DATA'] == 'P') & (df['DATA'] == 'PU')]
+
 # df_mlp = df[df['Model_Category'] == 'MLP']
-# barWidth = 0.25
-# bar1 = list(df_1d["OA"])
-# bar11 = list(df_1d["KAPPA"])
-# bar2 = list(df_mlp["OA"])
-# bar22 = list(df_mlp["KAPPA"])
-# # print(bar1, bar2)
-# r1 = np.arange(0, 4, 1)
-# r2 = [x + barWidth for x in r1]
-# # r3 = [x + barWidth for x in r2]
-# # r4 = [x + barWidth for x in r3]
-# plt.subplot(121)
-# plt.bar(r1, bar11, color='red', width=barWidth, edgecolor='black', label='1D CNN', alpha=0.8)
-# # plt.bar(r1, bar11, color='red', width=barWidth, edgecolor='white', alpha=0.5)
-# # plt.bar(r2, bar2, color='blue', width=barWidth, edgecolor='white', alpha=0.5)
-# plt.bar(r2, bar22, color='cyan', width=barWidth, edgecolor='black', label='MLP', alpha=0.5)
-#
-# # plt.xlabel(u'数据集', fontsize=8)
-# # plt.xlabel('DATA', fontweight='bold')
-# # plt.ylabel("KAPPA", fontweight='bold')
-# plt.ylabel("Kappa Coefficient", fontsize=8)
-#
-# plt.xticks([r+0.15 for r in np.arange(0, 4, 1)], ["IP", "KSC", "PC", "PU"],
-#            fontsize=8)
-# plt.yticks(fontsize=8)
-# plt.ylim(0.5, 1.0)
-# plt.legend(loc=2, prop={'size': 5})
-#
-# plt.subplot(122)
-# plt.bar(r1, bar1, color='red', width=barWidth, edgecolor='black', label='1D CNN', alpha=0.8)
-# # plt.bar(r1, bar11, color='red', width=barWidth, edgecolor='white', alpha=0.5)
-# # plt.bar(r2, bar2, color='blue', width=barWidth, edgecolor='white', alpha=0.5)
-# plt.bar(r2, bar2, color='cyan', width=barWidth, edgecolor='black', label='MLP', alpha=0.5)
-#
-# # plt.xlabel(u'数据集', fontsize=8)
-# # plt.xlabel('DATA', fontweight='bold')
-# # plt.ylabel("KAPPA", fontweight='bold')
-# plt.ylabel("Overall Accuracy", fontsize=8)
-#
-# plt.xticks([r+0.15 for r in np.arange(0, 4, 1)], ["IP", "KSC", "PC", "PU"],
-#            fontsize=8)
-# plt.yticks(fontsize=8)
-# plt.ylim(0.50, 1.00)
-# plt.legend(loc=2, prop={'size': 5})
-#
-# plt.show()
+df_mlp = df[(df['Model_Category'] == 'MLP') & (df['DATA'] == 'P') & (df['DATA'] == 'PU')]
+
+barWidth = 0.25
+bar1 = list(df_1d["OA"])
+bar11 = list(df_1d["KAPPA"])
+bar2 = list(df_mlp["OA"])
+bar22 = list(df_mlp["KAPPA"])
+# print(bar1, bar2)
+r1 = np.arange(0, 2, 1)
+r2 = [x + barWidth for x in r1]
+# r3 = [x + barWidth for x in r2]
+# r4 = [x + barWidth for x in r3]
+plt.subplot(121)
+plt.bar(r1, bar11, color='red', width=barWidth, edgecolor='black', label='1D CNN', alpha=0.8)
+# plt.bar(r1, bar11, color='red', width=barWidth, edgecolor='white', alpha=0.5)
+# plt.bar(r2, bar2, color='blue', width=barWidth, edgecolor='white', alpha=0.5)
+plt.bar(r2, bar22, color='cyan', width=barWidth, edgecolor='black', label='MLP', alpha=0.5)
+
+# plt.xlabel(u'数据集', fontsize=8)
+# plt.xlabel('DATA', fontweight='bold')
+# plt.ylabel("KAPPA", fontweight='bold')
+plt.ylabel("Kappa Coefficient", fontsize=8)
+
+plt.xticks([r+0.15 for r in np.arange(0, 2, 1)], ["PC", "PU"],
+           fontsize=8)
+plt.yticks(fontsize=8)
+plt.ylim(0.5, 1.0)
+plt.legend(loc=2, prop={'size': 5})
+
+plt.subplot(122)
+plt.bar(r1, bar1, color='red', width=barWidth, edgecolor='black', label='1D CNN', alpha=0.8)
+# plt.bar(r1, bar11, color='red', width=barWidth, edgecolor='white', alpha=0.5)
+# plt.bar(r2, bar2, color='blue', width=barWidth, edgecolor='white', alpha=0.5)
+plt.bar(r2, bar2, color='cyan', width=barWidth, edgecolor='black', label='MLP', alpha=0.5)
+
+# plt.xlabel(u'数据集', fontsize=8)
+# plt.xlabel('DATA', fontweight='bold')
+# plt.ylabel("KAPPA", fontweight='bold')
+plt.ylabel("Overall Accuracy", fontsize=8)
+
+plt.xticks([r+0.15 for r in np.arange(0, 2, 1)], ["PC", "PU"],
+           fontsize=8)
+plt.yticks(fontsize=8)
+plt.ylim(0.50, 1.00)
+plt.legend(loc=2, prop={'size': 5})
+
+plt.show()
 ###############################################################################################################
 
 # # subplot for Data
@@ -87,34 +92,98 @@ fig = plt.figure(num=0, figsize=(6, 4), dpi=300)
 ##############################################################################################################
 # group bar plot
 # # CNN_2D & DATA & M
-df_ip = df[(df["DATA"] == "IP") & (df["Model_Category"] == "CNN_2D") & (df["M"] <= 25)].sort_values("M")
-df_p = df[(df["DATA"] == "P") & (df["Model_Category"] == "CNN_2D") & (df["M"] <= 25)].sort_values("M")
-df_pu = df[(df["DATA"] == "PU") & (df["Model_Category"] == "CNN_2D") & (df["M"] <= 25)].sort_values("M")
-df_ksc = df[(df["DATA"] == "KSC") & (df["Model_Category"] == "CNN_2D") & (df["M"] <= 25)].sort_values("M")
-barWidth = 0.25
-bar1 = list(df_ip["OA"])
-bar2 = list(df_p["OA"])
-bar3 = list(df_pu["OA"])
-bar4 = list(df_ksc["OA"])
-
-r1 = np.arange(0, 12, 2)
-r2 = [x + barWidth for x in r1]
-r3 = [x + barWidth for x in r2]
-r4 = [x + barWidth for x in r3]
-
-plt.bar(r1, bar1, color='red', width=barWidth, edgecolor='black', label='IP')
-plt.bar(r2, bar2, color='cyan', width=barWidth, edgecolor='black',  label='PC')
-plt.bar(r3, bar3, color='pink', width=barWidth, edgecolor='black',  label='PU')
-plt.bar(r4, bar4, color='blue', width=barWidth, edgecolor='black', label='KSC')
-
-plt.xlabel('M', fontweight='bold')
-plt.ylabel("Overall Accuracy", fontweight='bold')
-plt.xticks([r + barWidth for r in np.arange(0, 12, 2)], np.arange(5, 26, 4))
-plt.ylim(0.9, 1.01)
-plt.legend(loc=2, prop={'size': 4})
-
-plt.show()
+# df_ip = df[(df["DATA"] == "IP") & (df["Model_Category"] == "CNN_2D") & (df["M"] <= 25)].sort_values("M")
+# df_ip = df[(df["DATA"] == "IP") & (df["Model_Category"] == "CNN_2D")].sort_values("M")
+#
+# # df_p = df[(df["DATA"] == "P") & (df["Model_Category"] == "CNN_2D") & (df["M"] <= 25)].sort_values("M")
+# df_p = df[(df["DATA"] == "P") & (df["Model_Category"] == "CNN_2D")].sort_values("M")
+#
+# # df_pu = df[(df["DATA"] == "PU") & (df["Model_Category"] == "CNN_2D") & (df["M"] <= 25)].sort_values("M")
+# df_pu = df[(df["DATA"] == "PU") & (df["Model_Category"] == "CNN_2D")].sort_values("M")
+#
+# # df_ksc = df[(df["DATA"] == "KSC") & (df["Model_Category"] == "CNN_2D") & (df["M"] <= 25)].sort_values("M")
+# df_ksc = df[(df["DATA"] == "KSC") & (df["Model_Category"] == "CNN_2D")].sort_values("M")
+#
+# barWidth = 0.25
+# bar1 = list(df_ip["OA"])
+# bar2 = list(df_p["OA"])
+# bar3 = list(df_pu["OA"])
+# bar4 = list(df_ksc["OA"])
+#
+# r1 = np.arange(0, 20, 2)
+# r2 = [x + barWidth for x in r1]
+# r3 = [x + barWidth for x in r2]
+# r4 = [x + barWidth for x in r3]
+#
+# plt.bar(r1, bar1, color='red', width=barWidth, edgecolor='black', label='IP')
+# plt.bar(r2, bar2, color='cyan', width=barWidth, edgecolor='black',  label='PC')
+# plt.bar(r3, bar3, color='pink', width=barWidth, edgecolor='black',  label='PU')
+# plt.bar(r4, bar4, color='blue', width=barWidth, edgecolor='black', label='KSC')
+#
+# plt.xlabel('M', fontweight='bold')
+# plt.ylabel("Overall Accuracy", fontweight='bold')
+# plt.xticks([r + barWidth for r in np.arange(0, 20, 2)], np.arange(5, 42, 4))
+# plt.ylim(0.9, 1.01)
+# plt.legend(loc=2, prop={'size': 4})
+#
+# plt.show()
 #####################################################################################
+# # line plot accuracy and confidence!
+# # # 2D CNN & M
+# df_ip = df[(df["DATA"] == "IP") & (df["Model_Category"] == "CNN_2D")].sort_values("M")
+#
+# # df_p = df[(df["DATA"] == "P") & (df["Model_Category"] == "CNN_2D") & (df["M"] <= 25)].sort_values("M")
+# df_p = df[(df["DATA"] == "P") & (df["Model_Category"] == "CNN_2D")].sort_values("M")
+#
+# # df_pu = df[(df["DATA"] == "PU") & (df["Model_Category"] == "CNN_2D") & (df["M"] <= 25)].sort_values("M")
+# df_pu = df[(df["DATA"] == "PU") & (df["Model_Category"] == "CNN_2D")].sort_values("M")
+#
+# # df_ksc = df[(df["DATA"] == "KSC") & (df["Model_Category"] == "CNN_2D") & (df["M"] <= 25)].sort_values("M")
+# df_ksc = df[(df["DATA"] == "KSC") & (df["Model_Category"] == "CNN_2D")].sort_values("M")
+#
+# l1 = list(df_ip["OA"])
+# l2 = list(df_p["OA"])
+# l3 = list(df_pu["OA"])
+# l4 = list(df_ksc["OA"])
+#
+# l11 = list(df_ip["Cof1"])
+# l22 = list(df_p["Cof1"])
+# l33 = list(df_pu["Cof1"])
+# l44 = list(df_ksc["Cof1"])
+#
+# print(l1, l11)
+#
+# # plt.subplot(121)
+# # plt.plot(np.arange(5, 42, 4), l1, c='blue', marker='+', ls='-')
+# plt.plot(np.arange(5, 42, 4), l2, c='r', marker='v', ls='--', label='PC_OA')
+# plt.plot(np.arange(5, 42, 4), l3, c='blue', marker='o', ls='--', label='PU_OA')
+# # plt.plot(np.arange(5, 42, 4), l4, c='cyan', marker='1', ls='-')
+#
+# plt.plot([], [], c='r', marker='s', ls='--', label='PC_Cof')
+# plt.plot([], [], c='blue', marker='+', ls='--', label='PU_Cof')
+# plt.xticks(np.arange(5, 42, 4))
+# plt.ylim([0.9, 1.01])
+# plt.ylabel('Overall Accuracy')
+# plt.xlabel("M")
+# plt.legend(loc=3, prop={'size': 8})
+# plt.twinx()
+# # plt.subplot(122)
+# # plt.plot(np.arange(5, 42, 4), l11, c='blue', marker='+', ls='--')
+# plt.plot(np.arange(5, 42, 4), l22, c='r', marker='s', ls='--', label='PC')
+# plt.plot(np.arange(5, 42, 4), l33, c='blue', marker='+', ls='--', label='PU')
+# # plt.plot(np.arange(5, 42, 4), l44, c='cyan', marker='1', ls='--')
+# plt.ylabel("Confidences < 0.5 ")
+# plt.xticks(np.arange(5, 42, 4))
+# plt.ylim([0, 0.3])
+# # plt.legend(loc=0)
+# plt.show()
+
+# plt.xlabel('M', fontweight='bold')
+# plt.ylabel("Overall Accuracy", fontweight='bold')
+# plt.ylim(0.9, 1.01)
+# plt.legend(loc=2, prop={'size': 4})
+#
+# plt.show()
 
 ######################################################################################
 # # 3D plot B & M & OA KAPPA COF
