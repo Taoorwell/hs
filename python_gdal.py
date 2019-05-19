@@ -458,8 +458,8 @@ def write_whole_image_predicts_prob(predict, shape):
     # plt.hist(conf, bins=10, range=(0, 1), facecolor='red', alpha=0.5)
     #
     # fig.add_subplot(122)
-    sn.heatmap(prob_img, annot=False, cmap="Greys_r", xticklabels=False, yticklabels=False)
-    # plt.imshow(prob_img, cmap='gray')
+    # sn.heatmap(prob_img, annot=False, cmap="Greys_r", xticklabels=False, yticklabels=False)
+    plt.imshow(prob_img, cmap='gray')
     # plt.axis('off')
     #
     # plt.show()
@@ -503,6 +503,23 @@ def write_region_image_classification_result(predict, train_data_path, shape):
     # plt.show()
 
 
+def classification_report_csv(report, filename):
+    report_data = []
+    lines = report.split('\n')
+    for line in lines[2:-3]:
+        row = {}
+        row_data = line.split('      ')
+        row_data = list(filter(None, row_data))
+        row['class'] = row_data[0]
+        row['precision'] = float(row_data[1])
+        row['recall'] = float(row_data[2])
+        row['f1_score'] = float(row_data[3])
+        row['support'] = float(row_data[4])
+        report_data.append(row)
+    dataframe = pd.DataFrame.from_dict(report_data)
+    dataframe.to_csv(filename, index=False)
+
+
 def print_plot_cm(y_true, y_pred):
     if y_pred.ndim == 2:
         y_pred = np.argmax(y_pred, axis=-1) + 1
@@ -513,17 +530,19 @@ def print_plot_cm(y_true, y_pred):
     # print("Overall Accuracy:{:.4%}".format(OA))
     # print("Kappa: ", KAPPA)
     print(classification_report(y_true, y_pred, digits=4))
+    # classification_report_csv(report, filename1)
     labels = [int(x) for x in sorted(list(set(y_true)))]
     cm_data = confusion_matrix(y_true, y_pred, labels=labels)
     cm_data1 = cm_data.astype('float') / cm_data.sum(axis=1)[:, np.newaxis]
     # df_cm = pd.DataFrame(cm_data, index=labels, columns=labels)
     df_cm1 = pd.DataFrame(cm_data1, index=labels, columns=labels)
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(12, 6), dpi=300)
     # plt.subplot(121)
     # sn.heatmap(df_cm, annot=True, cmap=plt.cm.Blues, fmt='0000')
     # plt.subplot(122)
     sn.heatmap(df_cm1, annot=True, cmap=plt.cm.Blues, fmt='.2f')
-    plt.show()
+    # plt.show()
+    # plt.savefig(filenames2)
     return OA, KAPPA
 
 

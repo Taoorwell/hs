@@ -91,6 +91,33 @@ def display_original_images(mat_data_path, train_mat_data_path, bands):
 
 ##############################################################################
 # # # # PLOT PREDICTION IMAGES & 2D CNN
+###############
+fusion_model_path = r'E:/HSI/code/predicts_mat/features_fusion/'
+fusion_model_list = os.listdir(fusion_model_path)
+PC, PU = [], []
+for f in fusion_model_list:
+    d = f.split('.')[0].split('_')[-1]
+    if d == 'P':
+        PC.append(f)
+    else:
+        PU.append(f)
+fig = plt.figure(num=1, figsize=(12, 4), dpi=300)
+for i in range(0, 2):
+    for j in range(0, 10):
+        prediction = sio.loadmat(fusion_model_path+PC[j])
+        prediction = prediction[list(prediction.keys())[-1]]
+        print(i, j)
+        ax = plt.subplot2grid((2, 10), (i, j))
+        if i == 0:
+            write_region_image_classification_result(prediction,
+                                                     train_data_path=MAIN_FOLDER+TRAIN_PATH[1],
+                                                     shape=image_shape[1])
+            ax.set_xlabel(str(PC[j].split('-')[0]) + 'R')
+        else:
+            write_whole_image_classification_result(prediction, shape=image_shape[1])
+            ax.set_xlabel(str(PC[j].split('-')[0]) + 'W')
+plt.show()
+#######################
 # cnn_2d_path = r'E:/HSI/code/predicts_mat/cnn_2d/'
 # cnn_2d_list = os.listdir(cnn_2d_path)
 # # print(cnn_2d_list)
@@ -129,47 +156,80 @@ def display_original_images(mat_data_path, train_mat_data_path, bands):
 
 ##############################################################################################################
 # # # PLOT PROBABILITY OF PREDICTION IMAGES
-cnn_2d_path = r'E:/HSI/code/predicts_mat/cnn_2d/'
-cnn_2d_list = os.listdir(cnn_2d_path)
-# print(cnn_2d_list)
-IP, KSC, PC, PU = [], [], [], []
-for f in cnn_2d_list:
-    data = f.split(".")[0].split("_")[-1]
-    if data == 'IP':
-        IP.append(f)
-    elif data == 'KSC':
-        KSC.append(f)
-    elif data == 'P':
-        PC.append(f)
-    elif data == 'PU':
-        PU.append(f)
-# print(IP, '\n', KSC)
-L = [IP, PC, PU, KSC]
-# print(len(IP), len(KSC), len(PU), len(PC))
-for l in L:
-    fig = plt.figure(num=1, figsize=(12, 4), dpi=300)
-    for i in range(0, 2):
-        for j in range(0, 10):
-            prediction = sio.loadmat(cnn_2d_path+l[j])
-            prediction = prediction[list(prediction.keys())[-1]]
-            print(i, j)
-            ax = plt.subplot2grid((2, 10), (i, j))
-            if i == 0:
-                write_whole_image_predicts_prob(prediction, shape=image_shape[L.index(l)])
-                # ax.axis('off')
-                ax.set_xticks([])
-                ax.set_yticks([])
-                ax.set_xlabel(str(l[j].split('-')[0]), fontsize=3)
-            else:
-                cof1 = write_whole_image_predicts_prob1(prediction, shape=image_shape[L.index(l)])
-                ax.set_xlabel(str(l[j].split('-')[0]) + ' {:.4f}'.format(cof1), fontsize=3)
-                ax.set_xticks([0, 0.1, 0.2, 0.3, 0.4, 0.5])
-                ax.tick_params(axis='both', which='major', labelsize=3)
-                # ax.set_yticks([])
-                ax.spines['top'].set_visible(False)
-                ax.spines['right'].set_visible(False)
-                if j != 0:
-                    ax.spines['left'].set_visible(False)
-                    ax.set_yticks([])
-    plt.show()
+# cnn_2d_path = r'E:/HSI/code/predicts_mat/cnn_2d/'
+# cnn_2d_list = os.listdir(cnn_2d_path)
+# # print(cnn_2d_list)
+# IP, KSC, PC, PU = [], [], [], []
+# for f in cnn_2d_list:
+#     data = f.split(".")[0].split("_")[-1]
+#     if data == 'IP':
+#         IP.append(f)
+#     elif data == 'KSC':
+#         KSC.append(f)
+#     elif data == 'P':
+#         PC.append(f)
+#     elif data == 'PU':
+#         PU.append(f)
+# # print(IP, '\n', KSC)
+# L = [IP, PC, PU, KSC]
+# # print(len(IP), len(KSC), len(PU), len(PC))
+# for l in L:
+#     fig = plt.figure(num=1, figsize=(12, 4), dpi=300)
+#     for i in range(0, 2):
+#         for j in range(0, 10):
+#             prediction = sio.loadmat(cnn_2d_path+l[j])
+#             prediction = prediction[list(prediction.keys())[-1]]
+#             print(i, j)
+#             ax = plt.subplot2grid((2, 10), (i, j))
+#             if i == 0:
+#                 write_whole_image_predicts_prob(prediction, shape=image_shape[L.index(l)])
+#                 # ax.axis('off')
+#                 ax.set_xticks([])
+#                 ax.set_yticks([])
+#                 ax.set_xlabel(str(l[j].split('-')[0]), fontsize=3)
+#             else:
+#                 cof1 = write_whole_image_predicts_prob1(prediction, shape=image_shape[L.index(l)])
+#                 ax.set_xlabel(str(l[j].split('-')[0]) + ' {:.4f}'.format(cof1), fontsize=3)
+#                 ax.set_xticks([0, 0.1, 0.2, 0.3, 0.4, 0.5])
+#                 ax.tick_params(axis='both', which='major', labelsize=3)
+#                 # ax.set_yticks([])
+#                 ax.spines['top'].set_visible(False)
+#                 ax.spines['right'].set_visible(False)
+#                 if j != 0:
+#                     ax.spines['left'].set_visible(False)
+#                     ax.set_yticks([])
+#     plt.show()
+
+# fusion_model_path = r'E:/HSI/code/predicts_mat/features_fusion/'
+# fusion_model_list = os.listdir(fusion_model_path)
+# PC, PU = [], []
+# for f in fusion_model_list:
+#     d = f.split('.')[0].split('_')[-1]
+#     if d == 'P':
+#         PC.append(f)
+#     else:
+#         PU.append(f)
+# fig = plt.figure(num=1, figsize=(12, 4), dpi=300)
+# for i in range(0, 2):
+#     for j in range(0, 10):
+#         prediction = sio.loadmat(fusion_model_path+PC[j])
+#         prediction = prediction[list(prediction.keys())[-1]]
+#         print(i, j)
+#         ax = plt.subplot2grid((2, 10), (i, j))
+#         if i == 0:
+#             write_whole_image_predicts_prob(prediction, shape=image_shape[1])
+#             ax.set_xticks([])
+#             ax.set_yticks([])
+#             ax.set_xlabel(str(PC[j].split('-')[0]), fontsize=3)
+#         else:
+#             cof1 = write_whole_image_predicts_prob1(prediction, shape=image_shape[1])
+#             ax.set_xlabel(str(PC[j].split('-')[0]) + ' {:.4f}'.format(cof1), fontsize=3)
+#             ax.set_xticks([0, 0.1, 0.2, 0.3, 0.4, 0.5])
+#             ax.tick_params(axis='both', which='major', labelsize=3)
+#             ax.spines['top'].set_visible(False)
+#             ax.spines['right'].set_visible(False)
+#             if j != 0:
+#                 ax.spines['left'].set_visible(False)
+#                 ax.set_yticks([])
+# plt.show()
 
