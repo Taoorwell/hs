@@ -10,10 +10,10 @@ from sklearn.model_selection import cross_val_score
 # import tensorflow as tf
 import time
 import matplotlib.pyplot as plt
-from models_keras import *
+# from models_keras import *
 
 # # Data Preparation
-MAIN_FOLDER = r'E:/HSI/'
+MAIN_FOLDER = r'F:/paper/HSI/'
 IP_DATA_PATH = 'IP/Indian_pines_corrected'
 IP_TRAIN_PATH = 'IP/Indian_pines_gt'
 PAVIA_DATA_PATH = "Pavia/Pavia"
@@ -37,23 +37,55 @@ lists1 = [33, 200, 200, 181, 200, 200, 20, 200, 14, 200, 200, 200, 143, 200, 200
 lists3 = [200, 150, 150, 150, 100, 150, 50, 200, 200, 200, 200, 200, 200]
 lists = [lists1, lists2, lists2, lists3]
 image_shape = [(145, 145), (1096, 715), (610, 340), (512, 614)]
-DATA_PATH = [IP_DATA_PATH, PAVIA_DATA_PATH, PAVIA_U_DATA_PATH, KSC_DATA_PATH]
-TRAIN_PATH = [IP_TRAIN_PATH, PAVIA_TRAIN_PATH, PAVIA_U_TRAIN_PATH, KSC_TRAIN_PATH]
+# DATA_PATH = [IP_DATA_PATH, PAVIA_DATA_PATH, PAVIA_U_DATA_PATH, KSC_DATA_PATH]
+DATA_PATH = [PAVIA_U_DATA_PATH, PAVIA_DATA_PATH, PAVIA_U_DATA_PATH, PAVIA_DATA_PATH]
+
+# TRAIN_PATH = [IP_TRAIN_PATH, PAVIA_TRAIN_PATH, PAVIA_U_TRAIN_PATH, KSC_TRAIN_PATH]
+TRAIN_PATH = [PAVIA_U_TRAIN_PATH, PAVIA_TRAIN_PATH, PAVIA_U_TRAIN_PATH, PAVIA_TRAIN_PATH]
+
 # name = ["mlp_IP.h5", "mlp_P.h5", "mlp_PU.h5", "mlp_KSC.h5"]
 name = ["cnn_2d_pca_IP.h5", "cnn_2d_pca_P.h5", "cnn_2d_pca_PU.h5", "cnn_2d_pca_KSC.h5"]
 model1 = ["cnn_1d_IP.h5", "cnn_1d_P.h5", "cnn_1d_PU.h5", "cnn_1d_KSC.h5"]
 model2 = ["29-cnn_2d_IP.h5", "29-cnn_2d_P.h5", "29-cnn_2d_PU.h5", "29-cnn_2d_KSC.h5"]
+
+#############################
+predicts_mat_path = "F:/paper/HSI/code/predicts_mat/"
+file = ['cnn_2d/21-cnn_2d_PU.mat', 'cnn_2d/25-cnn_2d_P.mat',
+        'features_fusion/21-cnn_1d_2d_fusion_PU.h5.mat', 'features_fusion/25-cnn_1d_2d_fusion_P.h5.mat']
+shape = [(610, 340), (1096, 715), (610, 340), (1096, 715)]
+
+for f, i in zip(file, range(0, 4)):
+    predictions = sio.loadmat(predicts_mat_path+f)
+    predictions = predictions[list(predictions.keys())[-1]]
+    predictions = np.argmax(predictions, axis=-1).reshape(shape[i]) + 1
+    print(predictions.shape)
+
+    _, is_train, training_labels = get_mat_info(mat_data_path=MAIN_FOLDER+DATA_PATH[i],
+                                                train_mat_data_path=MAIN_FOLDER+TRAIN_PATH[i])
+    _, x_test_index, _, y_test = custom_train_index(is_train, training_labels, c=9, lists=lists2)
+    print(x_test_index.shape, y_test.shape)
+    y_pre = []
+    for j in x_test_index:
+        y_pre.append(predictions[j[0], j[1]])
+    # y_pre = predictions[x_test_index]
+    y_pre = np.array(y_pre)
+    print(y_pre.shape)
+    OA, KAPPA = print_plot_cm(y_test, y_pre)
+    print(OA, KAPPA)
+
+
+
 # m = 29
-j = 5
-i = -1
-path = "E:/HSI/code/new_model_0/"
-save_path = "F:/paper/HSI/code/predicts_mat/"
-model_list = os.listdir(path)
-model_path = [path + x for x in model_list]
-print(model_path[j])
-model = load_model(model_path[j])
-get_test_predict(model, data_path=MAIN_FOLDER+DATA_PATH[i], train_data_path=MAIN_FOLDER+TRAIN_PATH[i],
-                 c=c[i], lists=lists[i], bsize=3200)
+# j = 5
+# i = -1
+# path = "E:/HSI/code/new_model_0/"
+# save_path = "F:/paper/HSI/code/predicts_mat/"
+# model_list = os.listdir(path)
+# model_path = [path + x for x in model_list]
+# print(model_path[j])
+# model = load_model(model_path[j])
+# get_test_predict(model, data_path=MAIN_FOLDER+DATA_PATH[i], train_data_path=MAIN_FOLDER+TRAIN_PATH[i],
+#                  c=c[i], lists=lists[i], bsize=3200)
 
 # config = model.get_config()
 # for k in config['layers']:

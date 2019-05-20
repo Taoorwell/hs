@@ -92,31 +92,31 @@ def display_original_images(mat_data_path, train_mat_data_path, bands):
 ##############################################################################
 # # # # PLOT PREDICTION IMAGES & 2D CNN
 ###############
-fusion_model_path = r'E:/HSI/code/predicts_mat/features_fusion/'
-fusion_model_list = os.listdir(fusion_model_path)
-PC, PU = [], []
-for f in fusion_model_list:
-    d = f.split('.')[0].split('_')[-1]
-    if d == 'P':
-        PC.append(f)
-    else:
-        PU.append(f)
-fig = plt.figure(num=1, figsize=(12, 4), dpi=300)
-for i in range(0, 2):
-    for j in range(0, 10):
-        prediction = sio.loadmat(fusion_model_path+PC[j])
-        prediction = prediction[list(prediction.keys())[-1]]
-        print(i, j)
-        ax = plt.subplot2grid((2, 10), (i, j))
-        if i == 0:
-            write_region_image_classification_result(prediction,
-                                                     train_data_path=MAIN_FOLDER+TRAIN_PATH[1],
-                                                     shape=image_shape[1])
-            ax.set_xlabel(str(PC[j].split('-')[0]) + 'R')
-        else:
-            write_whole_image_classification_result(prediction, shape=image_shape[1])
-            ax.set_xlabel(str(PC[j].split('-')[0]) + 'W')
-plt.show()
+# fusion_model_path = r'E:/HSI/code/predicts_mat/features_fusion/'
+# fusion_model_list = os.listdir(fusion_model_path)
+# PC, PU = [], []
+# for f in fusion_model_list:
+#     d = f.split('.')[0].split('_')[-1]
+#     if d == 'P':
+#         PC.append(f)
+#     else:
+#         PU.append(f)
+# fig = plt.figure(num=1, figsize=(12, 4), dpi=300)
+# for i in range(0, 2):
+#     for j in range(0, 10):
+#         prediction = sio.loadmat(fusion_model_path+PC[j])
+#         prediction = prediction[list(prediction.keys())[-1]]
+#         print(i, j)
+#         ax = plt.subplot2grid((2, 10), (i, j))
+#         if i == 0:
+#             write_region_image_classification_result(prediction,
+#                                                      train_data_path=MAIN_FOLDER+TRAIN_PATH[1],
+#                                                      shape=image_shape[1])
+#             ax.set_xlabel(str(PC[j].split('-')[0]) + 'R')
+#         else:
+#             write_whole_image_classification_result(prediction, shape=image_shape[1])
+#             ax.set_xlabel(str(PC[j].split('-')[0]) + 'W')
+# plt.show()
 #######################
 # cnn_2d_path = r'E:/HSI/code/predicts_mat/cnn_2d/'
 # cnn_2d_list = os.listdir(cnn_2d_path)
@@ -232,4 +232,21 @@ plt.show()
 #                 ax.spines['left'].set_visible(False)
 #                 ax.set_yticks([])
 # plt.show()
-
+##################################################################
+# cnn_1d_path = 'F:/paper/HSI/code/predicts_mat/cnn_1d/'
+# cnn_1d_list = os.listdir(cnn_1d_path)
+# file = [cnn_1d_list[-2], cnn_1d_list[-1]]
+# shape = [(1096, 715), (610, 340)]
+# # print(file)
+# fig = plt.figure(num=0, figsize=(6, 4), dpi=300)
+# for j in range(0, 2):
+#     predictions = sio.loadmat(cnn_1d_path + file[j])
+#     predictions = predictions[list(predictions.keys())[-1]]
+#     ax = plt.subplot2grid((1, 2), (0, j))
+#     write_whole_image_predicts_prob(predictions, shape=shape[j])
+#     ax.set_xticks([])
+#     ax.set_yticks([])
+#     ax.set_xlabel(file[j].split('.')[0].split('_')[-1])
+# plt.savefig('F:/author/svg/cnn_1d_prob_PC_PU.svg')
+# plt.savefig('F:/author/svg/cnn_1d_prob_PC_PU.png')
+# plt.show()

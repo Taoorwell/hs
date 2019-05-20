@@ -531,16 +531,16 @@ def print_plot_cm(y_true, y_pred):
     # print("Kappa: ", KAPPA)
     print(classification_report(y_true, y_pred, digits=4))
     # classification_report_csv(report, filename1)
-    labels = [int(x) for x in sorted(list(set(y_true)))]
-    cm_data = confusion_matrix(y_true, y_pred, labels=labels)
-    cm_data1 = cm_data.astype('float') / cm_data.sum(axis=1)[:, np.newaxis]
+    # labels = [int(x) for x in sorted(list(set(y_true)))]
+    # cm_data = confusion_matrix(y_true, y_pred, labels=labels)
+    # cm_data1 = cm_data.astype('float') / cm_data.sum(axis=1)[:, np.newaxis]
     # df_cm = pd.DataFrame(cm_data, index=labels, columns=labels)
-    df_cm1 = pd.DataFrame(cm_data1, index=labels, columns=labels)
-    plt.figure(figsize=(12, 6), dpi=300)
+    # df_cm1 = pd.DataFrame(cm_data1, index=labels, columns=labels)
+    # plt.figure(figsize=(12, 6), dpi=300)
     # plt.subplot(121)
     # sn.heatmap(df_cm, annot=True, cmap=plt.cm.Blues, fmt='0000')
     # plt.subplot(122)
-    sn.heatmap(df_cm1, annot=True, cmap=plt.cm.Blues, fmt='.2f')
+    # sn.heatmap(df_cm1, annot=True, cmap=plt.cm.Blues, fmt='.2f')
     # plt.show()
     # plt.savefig(filenames2)
     return OA, KAPPA
