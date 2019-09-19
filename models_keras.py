@@ -11,11 +11,11 @@ import numpy as np
 
 def mlp(input_shape, c, lr, rate1, rate2, l):
     inputs = Input(input_shape)
-    x = Dense(256, activation='relu')(inputs)
+    x = Dense(32, activation='relu')(inputs)
     # x = BatchNormalization()(x)
     # x = Activation(activation='relu')(x)
     x = Dropout(rate=rate1)(x)
-    x = Dense(256, activation='relu')(x)
+    x = Dense(64, activation='relu')(x)
     # x = BatchNormalization()(x)
     # x = Activation(activation='relu')(x)
     x = Dropout(rate=rate2)(x)

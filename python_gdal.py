@@ -18,7 +18,7 @@ from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report, f1_score, cohen_kappa_score, accuracy_score
 from imblearn.over_sampling import RandomOverSampler, BorderlineSMOTE, SMOTE
-from models_keras import *
+# from models_keras import *
 # Functions of Gdal
 # get raster data info, included rows, cols, n_bands, bands_data(read by band and shape is (W,H,C)),
 # projection and geo transformation.
@@ -105,7 +105,7 @@ def pca_data(data, n=3):
 # when m == block_size, Function returns training_samples is array of shape is (numbers samples,m,m,bands)
 # training_labels is same above!
 def get_prep_data(data_path, train_data_path, pca=False, norma_method="z-score", n=3):
-    if data_path.endswith('.pix'):
+    if data_path.endswith('.dat'):
         rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(data_path)
         try:
             labeled_pixels, is_train = vectors_to_raster(train_data_path, rows, cols, geo_transform, proj)
@@ -456,15 +456,15 @@ def print_plot_cm(y_true, y_pred):
         y_true = np.argmax(y_true, axis=-1) + 1
     OA = accuracy_score(y_true, y_pred)
     KAPPA = cohen_kappa_score(y_true, y_pred)
-    # print("Overall Accuracy:{:.4%}".format(OA))
-    # print("Kappa: ", KAPPA)
-    # print(classification_report(y_true, y_pred, digits=4))
-    # labels = sorted(list(set(y_true)))
-    # cm_data = confusion_matrix(y_true, y_pred, labels=labels)
-    # df_cm = pd.DataFrame(cm_data, index=labels, columns=labels)
-    # plt.figure(figsize=(10, 7))
-    # sn.heatmap(df_cm, annot=True, cmap=plt.cm.Blues, fmt='0000')
-    # plt.show()
+    print("Overall Accuracy:{:.4%}".format(OA))
+    print("Kappa: ", KAPPA)
+    print(classification_report(y_true, y_pred, digits=4))
+    labels = sorted(list(set(y_true)))
+    cm_data = confusion_matrix(y_true, y_pred, labels=labels)
+    df_cm = pd.DataFrame(cm_data, index=labels, columns=labels)
+    plt.figure(figsize=(10, 7))
+    sn.heatmap(df_cm, annot=True, cmap=plt.cm.Blues, fmt='0000')
+    plt.show()
     return OA, KAPPA
 
 
