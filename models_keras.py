@@ -131,7 +131,7 @@ def cnn_2d(input_shape, c, lr):
     x = Activation(activation='relu')(x)
     x = MaxPool2D(pool_size=2, padding='same')(x)
 
-    x = Conv2D(128, (3, 3), padding='same')(x)
+    x = Conv2D(64, (3, 3), padding='same')(x)
     # x = SpatialDropout2D(0.25)(x)
     x = BatchNormalization()(x)
     x = Activation(activation='relu')(x)

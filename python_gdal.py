@@ -225,8 +225,10 @@ def get_test_predict(model, data_path, train_data_path, c, lists, bsize, norma_m
 
 
 def write_out_whole_predicts(model, data_path, bsize, norma_methods='z-score', pca=False, m=1, n=3):
-    bands_data_dict = sio.loadmat(data_path)
-    bands_data = bands_data_dict[list(bands_data_dict.keys())[-1]]
+    # bands_data_dict = sio.loadmat(data_path)
+    # bands_data = bands_data_dict[list(bands_data_dict.keys())[-1]]
+    rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(
+        raster_data_path=data_path)
     bands_data = norma_data(bands_data, norma_methods=norma_methods)
     if pca is True:
         bands_data = pca_data(bands_data, n=n)
@@ -248,7 +250,7 @@ def write_out_whole_predicts(model, data_path, bsize, norma_methods='z-score', p
                 data = bands_data[i: i + m, j: j + m, :]
                 result.append(data)
                 if len(result) == bsize or i == int(rows-1):
-                    # print("Batches Predictions...")
+                    print("Batches Predictions...")
                     pre = np.stack(result)
                     if len(model.input.shape) == 5:
                         pre = pre.reshape((pre.shape[0], pre.shape[1], pre.shape[2], pre.shape[3], -1))
