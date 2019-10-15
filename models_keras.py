@@ -1,16 +1,19 @@
-from keras.models import Sequential, save_model, load_model, Model
-from keras.layers import Conv1D, Conv2D, Conv3D, Activation, MaxPool1D, MaxPool2D, MaxPool3D, Flatten, Dropout, Input
-from keras.layers import Dense, GlobalAveragePooling1D, GlobalAveragePooling2D, GlobalAveragePooling3D, concatenate
-from keras.layers import SpatialDropout1D, SpatialDropout2D, SpatialDropout3D
-from keras.regularizers import l2
-from keras.layers.normalization import BatchNormalization
-from keras.optimizers import Adam
-from keras import backend as K
+import tensorflow as tf
+# from tensorflow.keras import backend
+# from tensorflow.keras import Sequential, save_model, load_model, Model
+# from tensorflow.keras.layers import Conv1D, Conv2D,\
+#     Conv3D, Activation, MaxPool1D, MaxPool2D, MaxPool3D, Flatten, Dropout, Input
+# from keras.layers import Dense, GlobalAveragePooling1D, GlobalAveragePooling2D, GlobalAveragePooling3D, concatenate
+# from keras.layers import SpatialDropout1D, SpatialDropout2D, SpatialDropout3D
+# from keras.regularizers import l2
+# from keras.layers.normalization import BatchNormalization
+# from keras.optimizers import Adam
+# from keras import backend as K
 import numpy as np
 
 
 def mlp(input_shape, c, lr, rate1, rate2, l):
-    inputs = Input(input_shape)
+    inputs = tf.keras.Input(input_shape)
     x = Dense(32, activation='relu')(inputs)
     # x = BatchNormalization()(x)
     # x = Activation(activation='relu')(x)

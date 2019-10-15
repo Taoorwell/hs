@@ -17,7 +17,7 @@ import scipy.io as sio
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report, f1_score, cohen_kappa_score, accuracy_score
-from imblearn.over_sampling import RandomOverSampler, BorderlineSMOTE, SMOTE
+# from imblearn.over_sampling import RandomOverSampler, BorderlineSMOTE, SMOTE
 # from models_keras import *
 # Functions of Gdal
 # get raster data info, included rows, cols, n_bands, bands_data(read by band and shape is (W,H,C)),
@@ -68,6 +68,15 @@ def vectors_to_raster(vector_path, rows, cols, geo_transform, projection):
         ds = None
     is_train = np.nonzero(labeled_pixels)
     return labeled_pixels, is_train
+
+
+def vectors_to_raster1(vector_path, rows, cols, geo_transform, projection):
+    labeled_pixels = np.zeros((rows, cols))
+    ds = create_mask_from_vector(vector_path, cols, rows, geo_transform,
+                                 projection, target_value=1)
+    band = ds.GetRasterBand(1)
+    labeled_pixels += band.ReadAsArray()
+    return labeled_pixels
 
 
 # # due to hyperspectral images datasets on web is .mat format, using scipy.sio read .mat data
