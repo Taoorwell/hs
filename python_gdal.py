@@ -17,6 +17,7 @@ import scipy.io as sio
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report, f1_score, cohen_kappa_score, accuracy_score
+# import geopandas as gpd
 # from imblearn.over_sampling import RandomOverSampler, BorderlineSMOTE, SMOTE
 # from models_keras import *
 # Functions of Gdal
