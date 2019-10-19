@@ -10,8 +10,8 @@ file_path = r"G:/GF/JL/images/GF2_4314_GS_2.dat"
 vector_path = r"G:/GF/JL/vector/new_shp"
 vector = r"G:/GF/JL/vector/new_samples.shp"
 
-segments_path = r"H:/GF/JL/sg/40_10_05_new.shp"
-centroid_path = r"H:/GF/JL/sg/40_10_05_centroid_new.shp"
+segments_path = r"G:/GF/JL/sg/30_10_05.shp"
+# centroid_path = r"G:/GF/JL/sg/40_10_05_centroid_new.shp"
 
 mat_images_path = r'G:/GF/JL/images/mat/GF_2.mat'
 mat_labels_path = r'G:/GF/JL/images/mat/GF_2_LABEL.mat'
@@ -28,42 +28,67 @@ lists = [400, 400, 400, 400, 400, 400, 400, 400]
 # for i in tqdm(A):
 #     id = samples[samples['CLASS_ID'] == i]
 #     id.to_file(r"G:/GF/JL/vector/new_shp/{}.shp".format(i))
-# rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(raster_data_path=file_path)
+rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(raster_data_path=file_path)
 # bands_data = norma_data(bands_data, norma_methods='z-score')
 # bands_data_dict = sio.loadmat(mat_images_path)
 # bands_data = bands_data_dict[list(bands_data_dict.keys())[-1]]
-# bands_data = norma_data(bands_data, norma_methods='z-score')
+bands_data = norma_data(bands_data, norma_methods='min-max')
 #
-# segments = gpd.read_file(segments_path)
+segments = gpd.read_file(segments_path)
 # centroid = gpd.read_file(centroid_path)
-# X = segments.centroid.x
-# Y = segments.centroid.y
-# centroid['R'] = [int(a) for a in (2957730.452 - Y)]
-# centroid['C'] = [int(b) for b in (X - 541546.573)]
+X = segments.centroid.x
+Y = segments.centroid.y
+segments['R'] = [int(a) for a in (2957730.452 - Y)]
+segments['C'] = [int(b) for b in (X - 541546.573)]
 #
 # # print(centroid.head())
 # # print(centroid['R'])
-# model2 = tf.keras.models.load_model(r'H:/GF/JL/model/CNN_33.h5')
-# model2.summary()
-# n = 16
-# predicts = []
-# samples = []
-# for x, y in tqdm(zip(centroid['R'], centroid['C'])):
-#     print(x, y)
-#     k1 = x - n
-#     k2 = x + n + 1
-#     k3 = y - n
-#     k4 = y + n + 1
-#     block = bands_data[k1:k2, k3:k4]
-#     samples.append(block)
-# pre = model2.predict(np.stack(samples))
-# predicts.append(pre)
-#
+model2 = tf.keras.models.load_model(r'G:/GF/JL/model/CNN_33.h5')
+model2.summary()
+n = 16
+
+samples = []
+for x, y in tqdm(zip(segments['R'], segments['C'])):
+    print(x, y)
+    k1 = x - n
+    k2 = x + n + 1
+    k3 = y - n
+    k4 = y + n + 1
+    block = bands_data[k1:k2, k3:k4]
+    samples.append(block)
+pre = model2.predict(np.stack(samples))
+predicts = np.argmax(pre, axis=-1) + 1
+
+segments['predicts'] = predicts
+A = np.unique(segments['predicts'])
+print(A)
+for i in tqdm(A):
+    id = segments[segments['predicts'] == i]
+    id.to_file(r"G:/GF/JL/vector/new_shp_1/{}.shp".format(i))
+
+labeled_pixels, is_train = vectors_to_raster(vector_path=r"G:/GF/JL/vector/new_shp_1", rows=rows, cols=cols,
+                                             geo_transform=geo_transform,
+                                             projection=proj)
+
+# # is_train = np.nonzero(labeled_pixel)
+# if predict.ndim == 2:
+#     labels = np.argmax(predict, axis=-1) + 1
+# else:
+#     labels = predict
+# label = np.zeros(shape)
+# for i, j, k in zip(is_train[0], is_train[1], labels):
+#     label[i, j] = k
+arr_2d = labeled_pixels
+arr_3d = np.zeros((arr_2d.shape[0], arr_2d.shape[1], 3), dtype=np.uint8)
+for c, i in palette.items():
+    m = arr_2d == c
+    arr_3d[m] = i
+plt.imshow(arr_3d)
+plt.show()
 # predicts = np.concatenate(predicts)
 # predicts = np.argmax(predicts, axis=-1) + 1
 # print(predicts)
 #
-# segments['predicts'] = predicts
 # centroid['predicts'] = predicts
 #
 # segments.to_file(r"H:/GF/JL/sg/40_10_05_new_p.shp")
@@ -178,38 +203,38 @@ lists = [400, 400, 400, 400, 400, 400, 400, 400]
 # model1.fit(train_samples, train_labels, batch_size=30, epochs=500)
 # model1.save(r"G:/GF/JL/model/MLP.h5")
 
-train_samples, train_labels = get_train_sample(data_path=mat_images_path, train_data_path=mat_labels_path,
-                                               c=8, lists=lists, d=4, norma_methods='min-max', m=33)
-
-train_labels = one_hot_encode(c=8, labels=train_labels)
-print(train_samples.shape, train_labels.shape)
-
-model2 = tf.keras.models.Sequential([tf.keras.layers.Conv2D(12, (3, 3), padding='same', input_shape=(33, 33, 4)),
-                                     tf.keras.layers.BatchNormalization(),
-                                     tf.keras.layers.Activation(activation='relu'),
-                                     tf.keras.layers.MaxPool2D(2, padding='same'),
-                                     tf.keras.layers.Conv2D(24, (3, 3), padding='same'),
-                                     tf.keras.layers.BatchNormalization(),
-                                     tf.keras.layers.Activation(activation='relu'),
-                                     tf.keras.layers.MaxPool2D(2, padding='same'),
-                                     tf.keras.layers.Conv2D(48, (3, 3), padding='same'),
-                                     tf.keras.layers.BatchNormalization(),
-                                     tf.keras.layers.Activation(activation='relu'),
-                                     tf.keras.layers.MaxPool2D(2, padding='same'),
-                                     tf.keras.layers.Flatten(),
-                                     tf.keras.layers.Dense(32, activation='relu'),
-                                     tf.keras.layers.Dropout(0.1),
-                                     tf.keras.layers.Dense(8, activation='softmax')])
-
-model2.compile(optimizer=tf.keras.optimizers.Adam(lr=0.01), loss='categorical_crossentropy', metrics=['accuracy'])
-# model2 = tf.keras.models.load_model(r"G:/GF/JL/model/CNN_33.h5")
-model2.summary()
-
-model2.fit(train_samples, train_labels, batch_size=30, epochs=100)
-
-# SAVE MODEL!!!!!!!!!!!!!!!
-model2.save(r"G:/GF/JL/model/CNN_33.h5")
-print("Model Saved!!!")
+# train_samples, train_labels = get_train_sample(data_path=mat_images_path, train_data_path=mat_labels_path,
+#                                                c=8, lists=lists, d=4, norma_methods='min-max', m=33)
+#
+# train_labels = one_hot_encode(c=8, labels=train_labels)
+# print(train_samples.shape, train_labels.shape)
+#
+# model2 = tf.keras.models.Sequential([tf.keras.layers.Conv2D(12, (3, 3), padding='same', input_shape=(33, 33, 4)),
+#                                      tf.keras.layers.BatchNormalization(),
+#                                      tf.keras.layers.Activation(activation='relu'),
+#                                      tf.keras.layers.MaxPool2D(2, padding='same'),
+#                                      tf.keras.layers.Conv2D(24, (3, 3), padding='same'),
+#                                      tf.keras.layers.BatchNormalization(),
+#                                      tf.keras.layers.Activation(activation='relu'),
+#                                      tf.keras.layers.MaxPool2D(2, padding='same'),
+#                                      tf.keras.layers.Conv2D(48, (3, 3), padding='same'),
+#                                      tf.keras.layers.BatchNormalization(),
+#                                      tf.keras.layers.Activation(activation='relu'),
+#                                      tf.keras.layers.MaxPool2D(2, padding='same'),
+#                                      tf.keras.layers.Flatten(),
+#                                      tf.keras.layers.Dense(32, activation='relu'),
+#                                      tf.keras.layers.Dropout(0.1),
+#                                      tf.keras.layers.Dense(8, activation='softmax')])
+#
+# model2.compile(optimizer=tf.keras.optimizers.Adam(lr=0.01), loss='categorical_crossentropy', metrics=['accuracy'])
+# # model2 = tf.keras.models.load_model(r"G:/GF/JL/model/CNN_33.h5")
+# model2.summary()
+#
+# model2.fit(train_samples, train_labels, batch_size=30, epochs=100)
+#
+# # SAVE MODEL!!!!!!!!!!!!!!!
+# model2.save(r"G:/GF/JL/model/CNN_33.h5")
+# print("Model Saved!!!")
 ################################################################################
 # MLP
 # model = load_model(r"E:/temp/mlp_model.h5")
