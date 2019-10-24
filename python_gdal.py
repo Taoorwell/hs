@@ -11,18 +11,51 @@ import numpy as np
 import pandas as pd
 import seaborn as sn
 import matplotlib.pyplot as plt
-import os
 from osgeo import gdal
+import os
 import scipy.io as sio
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report, f1_score, cohen_kappa_score, accuracy_score
-# import geopandas as gpd
-# from imblearn.over_sampling import RandomOverSampler, BorderlineSMOTE, SMOTE
-# from models_keras import *
+import geopandas as gpd
 # Functions of Gdal
 # get raster data info, included rows, cols, n_bands, bands_data(read by band and shape is (W,H,C)),
 # projection and geo transformation.
+
+
+def split_vector(vector_path, save_path):
+    samples = gpd.read_file(vector_path)
+    classes = np.unique(samples['CLASS_ID'])
+    for i in classes:
+        single = samples[samples['CLASS_ID'] == i]
+        single.to_file(save_path + r'{}.shp'.format(i))
+    print("Split Finish" + " Check in " + save_path)
+
+
+def split_segments_predicts(segments, save_path):
+    classes = np.unique(segments['predicts'])
+    for i in classes:
+        single = segments[segments['predicts'] == i]
+        single.to_file(save_path + '{}.shp'.format(i))
+    print('Split Finish ' + " Check in " + save_path)
+
+
+def plot_predicts(arr_2d):
+    arr_3d = np.zeros((arr_2d.shape[0], arr_2d.shape[1], 3), dtype=np.uint8)
+    for c, i in palette.items():
+        m = arr_2d == c
+        arr_3d[m] = i
+    plt.imshow(arr_3d)
+    plt.show()
+
+
+def get_centroid_index(segments_path):
+    segments = gpd.read_file(segments_path)
+    X = segments.centroid.x
+    Y = segments.centroid.y
+    segments['R'] = [int(a) for a in (2957730.452 - Y)]
+    segments["C"] = [int(b) for b in (X - 541546.573)]
+    return segments
 
 
 def get_raster_info(raster_data_path):
@@ -80,14 +113,18 @@ def vectors_to_raster1(vector_path, rows, cols, geo_transform, projection):
     return labeled_pixels
 
 
+def get_mat(mat_data_path):
+    bands_data_dict = sio.loadmat(mat_data_path)
+    bands_data = bands_data_dict[list(bands_data_dict.keys())[-1]]
+    return bands_data
+
+
 # # due to hyperspectral images datasets on web is .mat format, using scipy.sio read .mat data
 # # return is dict and bands data and labels ndarray is last key value.
 # # get is_train from labels ndarry and generate training labels and bands data and is_train.
 def get_mat_info(mat_data_path, train_mat_data_path):
-    bands_data_dict = sio.loadmat(mat_data_path)
-    bands_data = bands_data_dict[list(bands_data_dict.keys())[-1]]
-    labeled_pixel_dict = sio.loadmat(train_mat_data_path)
-    labeled_pixel = labeled_pixel_dict[list(labeled_pixel_dict.keys())[-1]]
+    bands_data = get_mat(mat_data_path)
+    labeled_pixel = get_mat(train_mat_data_path)
     is_train = np.nonzero(labeled_pixel)
     training_labels = labeled_pixel[is_train]
     return bands_data, is_train, training_labels
@@ -399,12 +436,7 @@ def write_whole_image_classification_result(predict, shape):
     if predict.ndim == 2:
         predict = np.argmax(predict, axis=-1) + 1
     arr_2d = np.reshape(predict, shape)
-    arr_3d = np.zeros((arr_2d.shape[0], arr_2d.shape[1], 3), dtype=np.uint8)
-    for c, i in palette.items():
-        m = arr_2d == c
-        arr_3d[m] = i
-    plt.imshow(arr_3d)
-    plt.show()
+    plot_predicts(arr_2d)
 
 
 def write_whole_image_predicts_prob(predict, shape):
@@ -452,13 +484,7 @@ def write_region_image_classification_result(predict, train_data_path, shape):
     label = np.zeros(shape)
     for i, j, k in zip(is_train[0], is_train[1], labels):
         label[i, j] = k
-    arr_2d = label
-    arr_3d = np.zeros((arr_2d.shape[0], arr_2d.shape[1], 3), dtype=np.uint8)
-    for c, i in palette.items():
-        m = arr_2d == c
-        arr_3d[m] = i
-    plt.imshow(arr_3d)
-    plt.show()
+    plot_predicts(arr_2d=label)
 
 
 def print_plot_cm(y_true, y_pred):
@@ -533,15 +559,15 @@ def delete_error_category(training_labels, training_samples):
 
 # # palette is color map for rgb convert. preference setting.
 # # including 16 types color, can increase or decrease.
-palette = {0: (255, 255, 255),
-           1: (0, 0, 128),
-           2: (0, 128, 0),
-           3: (128, 0, 0),
-           4: (0, 0, 255),
-           5: (0, 255, 0),
-           6: (255, 0, 0),
-           7: (0, 255, 255),
-           8: (255, 255, 0),
+palette = {0: (255, 255, 255),  # White
+           1: (0, 191, 255),  # DeepSkyBlue
+           2: (34, 139, 34),  # ForestGreen
+           3: (255, 165, 0),  # Orange
+           4: (0, 0, 255),  # Blue
+           5: (255, 127, 80),  # Coral
+           6: (255, 0, 0),  # Red
+           7: (0, 255, 255),  # Cyan
+           8: (0, 255, 0),  # Lime
            9: (0, 128, 128),
            10: (128, 128, 0),
            11: (255, 128, 128),
