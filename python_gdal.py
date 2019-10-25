@@ -473,18 +473,21 @@ def write_whole_image_predicts_prob(predict, shape):
 
 # # write out labeled data given to RGB
 # # parameter: predict value from model, train_mat_data_path for is_train, original images shape
-def write_region_image_classification_result(predict, train_data_path, shape):
+def write_region_image_classification_result(predict, train_data_path, shape, filename):
     labeled_pixel_dict = sio.loadmat(train_data_path)
     labeled_pixel = labeled_pixel_dict[list(labeled_pixel_dict.keys())[-1]]
     is_train = np.nonzero(labeled_pixel)
-    if predict.ndim == 2:
-        labels = np.argmax(predict, axis=-1) + 1
-    else:
-        labels = predict
+    # if predict.ndim == 2:
+    #     labels = np.argmax(predict, axis=-1) + 1
+    # else:
+    #     labels = predict
+    labels = predict
     label = np.zeros(shape)
     for i, j, k in zip(is_train[0], is_train[1], labels):
         label[i, j] = k
-    plot_predicts(arr_2d=label)
+    save_array_to_mat(label, filename=filename)
+    print("Save predicts success Check in " + filename)
+    # plot_predicts(arr_2d=label)
 
 
 def print_plot_cm(y_true, y_pred):
