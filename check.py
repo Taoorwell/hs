@@ -148,7 +148,7 @@ is_train = np.nonzero(region_bands_data)
 print(region_bands_data.shape)
 predicts = write_train_region_predicts(model=model2, data_path=mat_images_path,
                                        train_data_path=mat_region_path, bsize=6400,
-                                       norma_methods='min-max', m=33)
+                                       norma_methods='z-score', m=33)
 
 write_region_image_classification_result(predicts, train_data_path=mat_region_path, shape=(7500, 5000))
 # _, _, _, bands_data, _, _ = get_raster_info(raster_data_path=file_path)

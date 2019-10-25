@@ -340,7 +340,7 @@ def write_train_region_predicts(model, data_path, train_data_path,
             block = bands_data[k1:k2, k3:k4]
             samples.append(block)
             if len(samples) == bsize or i == index.shape[0] - 1:
-                # print("Batches Predictions...")
+                print("Batches Predictions...")
                 pre = np.stack(samples)
                 if len(model.input.shape) == 5:
                     pre = pre.reshape((pre.shape[0], pre.shape[1], pre.shape[2], pre.shape[3], -1))
