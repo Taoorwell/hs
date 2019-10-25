@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 # import shapefile as shp
 # from shapfile_plot import *
-pwd = r"H:/GF/JL/"
-# pwd = r"D:/JL/"
+# pwd = r"H:/GF/JL/"
+pwd = r"D:/JL/"
 # pwd = r"G:/GF/JL/"
 # pwd = r"/content/drive/'My Drive'/Drive_Data"
 file_path = pwd + r"images/GF2_4314_GS_2.dat"
