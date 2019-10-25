@@ -27,7 +27,9 @@ lists = [400, 400, 400, 400, 400, 400, 400, 400]
 
 model_list = ["MLP.h5", "CNN_33.h5", "CNN_65.h5", "CNN_49.h5"]
 for i in model_list:
+    print("Loading Model:" + i)
     model = tf.keras.models.load_model(model_path + i)
+    print("Model Loading Success, Model Inference...")
     if len(model.input.shape) == 2:
         predicts = write_train_region_predicts(model, data_path=mat_images_path,
                                                train_data_path=mat_region_path, bsize=10000,
@@ -36,6 +38,7 @@ for i in model_list:
         predicts = write_train_region_predicts(model, data_path=mat_images_path,
                                                train_data_path=mat_region_path, bsize=10000,
                                                norma_methods='min-max', m=int(i.split('_')[-1].split(".")[0]))
+    print("Model Inference Finished, Result output.....")
     write_region_image_classification_result(predicts, train_data_path=mat_region_path,
                                              shape=(7500, 5000, 8), filename=pwd+i.split(".")[0]+'_pre.mat')
 
