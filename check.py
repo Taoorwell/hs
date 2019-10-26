@@ -1,11 +1,7 @@
 import tensorflow as tf
 from python_gdal import *
-import geopandas as gpd
-from tqdm import tqdm
-import numpy as np
-import pandas as pd
-# import shapefile as shp
-# from shapfile_plot import *
+
+
 # pwd = r"H:/GF/JL/"
 pwd = r"D:/JL/"
 # pwd = r"G:/GF/JL/"
@@ -31,16 +27,16 @@ for i in model_list:
     model = tf.keras.models.load_model(model_path + i)
     print("Model Loading Success, Model Inference...")
     if len(model.input.shape) == 2:
-        predicts = write_train_region_predicts(model, data_path=mat_images_path,
-                                               train_data_path=mat_region_path, bsize=10000,
-                                               norma_methods='min-max')
+        predicts = write_region_predicts(model, data_path=mat_images_path,
+                                         train_data_path=mat_region_path, bsize=10000,
+                                         norma_methods='min-max')
     else:
-        predicts = write_train_region_predicts(model, data_path=mat_images_path,
-                                               train_data_path=mat_region_path, bsize=10000,
-                                               norma_methods='min-max', m=int(i.split('_')[-1].split(".")[0]))
+        predicts = write_region_predicts(model, data_path=mat_images_path,
+                                         train_data_path=mat_region_path, bsize=10000,
+                                         norma_methods='min-max', m=int(i.split('_')[-1].split(".")[0]))
     print("Model Inference Finished, Result output.....")
-    write_region_image_classification_result(predicts, train_data_path=mat_region_path,
-                                             shape=(7500, 5000, 8), filename=pwd+i.split(".")[0]+'_pre.mat')
+    # write_region_image_classification_result(predicts, train_data_path=mat_region_path,
+    #                                          shape=(7500, 5000, 8), filename=pwd+i.split(".")[0]+'_pre.mat')
 
 # split_vector(vector_path=vector, save_path=pwd + 'vector/new_shp/')
 # segments = get_centroid_index(segments_path=segments_path)
@@ -60,11 +56,11 @@ for i in model_list:
 # for x, y in tqdm(zip(segments['R'], segments['C'])):
 #    print(x, y)
 #    k1 = x - n
-#   k2 = x + n + 1
-#  k3 = y - n
-# k4 = y + n + 1
-# block = bands_data[k1:k2, k3:k4]
-# samples.append(block)
+#    k2 = x + n + 1
+#    k3 = y - n
+#    k4 = y + n + 1
+#    block = bands_data[k1:k2, k3:k4]
+#    samples.append(block)
 # pre = model2.predict(np.stack(samples))
 # predicts = np.argmax(pre, axis=-1) + 1
 

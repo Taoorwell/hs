@@ -7,17 +7,17 @@
 
 
 # # Load packages
+import os
 import numpy as np
 import pandas as pd
 import seaborn as sn
-import matplotlib.pyplot as plt
-from osgeo import gdal
-import os
+from tqdm import tqdm
 import scipy.io as sio
-from sklearn.decomposition import PCA
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import confusion_matrix, classification_report, f1_score, cohen_kappa_score, accuracy_score
+from osgeo import gdal
 import geopandas as gpd
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix, classification_report, cohen_kappa_score, accuracy_score
+# from sklearn.decomposition import PCA
 # Functions of Gdal
 # get raster data info, included rows, cols, n_bands, bands_data(read by band and shape is (W,H,C)),
 # projection and geo transformation.
@@ -40,22 +40,35 @@ def split_segments_predicts(segments, save_path):
     print('Split Finish ' + " Check in " + save_path)
 
 
-def plot_predicts(arr_2d):
-    arr_3d = np.zeros((arr_2d.shape[0], arr_2d.shape[1], 3), dtype=np.uint8)
-    for c, i in palette.items():
-        m = arr_2d == c
-        arr_3d[m] = i
-    plt.imshow(arr_3d)
-    plt.show()
-
-
-def get_centroid_index(segments_path):
+def get_predicts_segments(segments_path, image_mat_path, norma_methods, m, model):
     segments = gpd.read_file(segments_path)
-    X = segments.centroid.x
-    Y = segments.centroid.y
-    segments['R'] = [int(a) for a in (2957730.452 - Y)]
-    segments["C"] = [int(b) for b in (X - 541546.573)]
+    x = segments.centroid.x
+    y = segments.centroid.y
+    segments['R'] = [int(a) for a in (2957730.452 - y)]
+    segments["C"] = [int(b) for b in (x - 541546.573)]
+    bands_data = get_mat(mat_data_path=image_mat_path)
+    bands_data = norma_data(bands_data, norma_methods)
+    n = int((m - 1) / 2)
+    samples = []
+    for x, y in tqdm(zip(segments['R'], segments['C'])):
+        k1 = x - n
+        k2 = x + n + 1
+        k3 = y - n
+        k4 = y + n + 1
+        block = bands_data[k1:k2, k3:k4]
+        samples.append(block)
+    print("Starting Predicts Segments...")
+    pre = model.predict(np.stack(samples))
+    print("Predicting Finish!!!")
+    predicts = np.argmax(pre, axis=-1) + 1
+    prob = np.max(pre, axis=1)
+    segments['predicts'] = predicts
+    segments['prob'] = prob
+    print("Save Results into Shapefiles Success!!")
     return segments
+
+
+# def get_predicts_segments(model, ):
 
 
 def get_raster_info(raster_data_path):
@@ -75,7 +88,6 @@ def get_raster_info(raster_data_path):
 # read shapefiles of label, And rasterize layer with according label values.used together with below func.
 def create_mask_from_vector(vector_data_path, cols, rows, geo_transform,
                             projection, target_value=1):
-    """ Rasterize the given vector(wrapper for gdal.RasterizeLayer)"""
     data_source = gdal.OpenEx(vector_data_path, gdal.OF_VECTOR)
     layer = data_source.GetLayer(0)
     driver = gdal.GetDriverByName('MEM')
@@ -99,7 +111,7 @@ def vectors_to_raster(vector_path, rows, cols, geo_transform, projection):
                                      projection, target_value=label)
         band = ds.GetRasterBand(1)
         labeled_pixels += band.ReadAsArray()
-        ds = None
+        # ds = None
     is_train = np.nonzero(labeled_pixels)
     return labeled_pixels, is_train
 
@@ -113,15 +125,15 @@ def vectors_to_raster1(vector_path, rows, cols, geo_transform, projection):
     return labeled_pixels
 
 
+# # due to hyperspectral images datasets on web is .mat format, using scipy.sio read .mat data
+# # return is dict and bands data and labels ndarray is last key value.
+# # get is_train from labels ndarry and generate training labels and bands data and is_train.
 def get_mat(mat_data_path):
     bands_data_dict = sio.loadmat(mat_data_path)
     bands_data = bands_data_dict[list(bands_data_dict.keys())[-1]]
     return bands_data
 
 
-# # due to hyperspectral images datasets on web is .mat format, using scipy.sio read .mat data
-# # return is dict and bands data and labels ndarray is last key value.
-# # get is_train from labels ndarry and generate training labels and bands data and is_train.
 def get_mat_info(mat_data_path, train_mat_data_path):
     bands_data = get_mat(mat_data_path)
     labeled_pixel = get_mat(train_mat_data_path)
@@ -131,17 +143,17 @@ def get_mat_info(mat_data_path, train_mat_data_path):
 
 
 def save_array_to_mat(array, filename):
-    dict = {"pre": array}
-    sio.savemat(filename, dict)
+    dicts = {"pre": array}
+    sio.savemat(filename, dicts)
 
 
 # # pca data for decreasing dimensions, data is bands data after normalization.
-def pca_data(data, n=3):
-    x = data.reshape(-1, data.shape[-1])
-    pca = PCA(n_components=n).fit(x)
-    x_p = pca.transform(x)
-    x_p = x_p.reshape(data.shape[0], data.shape[1], n)
-    return x_p
+# def pca_data(data, n=3):
+#     x = data.reshape(-1, data.shape[-1])
+#     pca = PCA(n_components=n).fit(x)
+#     x_p = pca.transform(x)
+#     x_p = x_p.reshape(data.shape[0], data.shape[1], n)
+#     return x_p
 
 
 # According to label_pixel's geo and index to obtain training samples accordingly.
@@ -151,7 +163,7 @@ def pca_data(data, n=3):
 # training_labels return is shape of (numbers samples,) array.
 # when m == block_size, Function returns training_samples is array of shape is (numbers samples,m,m,bands)
 # training_labels is same above!
-def get_prep_data(data_path, train_data_path, pca=False, norma_method="z-score", n=3):
+def get_prep_data(data_path, train_data_path, norma_method="z-score"):
     if data_path.endswith('.dat'):
         rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(data_path)
         try:
@@ -166,13 +178,22 @@ def get_prep_data(data_path, train_data_path, pca=False, norma_method="z-score",
         bands_data, is_train, training_labels = get_mat_info(data_path, train_data_path)
 
     bands_data = norma_data(bands_data, norma_methods=norma_method)
-    if pca is True:
-        bands_data = pca_data(bands_data, n=n)
+    # if pca is True:
+    #     bands_data = pca_data(bands_data, n=n)
     return bands_data, is_train, training_labels
 
 
-def custom_train_index(is_train, training_labels, c, lists):
-    np.random.seed(10)
+def get_shuffle(a, b):
+
+    state = np.random.get_state()
+    np.random.shuffle(a)
+    np.random.set_state(state)
+    np.random.shuffle(b)
+    return a, b
+
+
+def custom_train_index(seed, is_train, training_labels, c, lists):
+    np.random.seed(seed)
     index = np.array(is_train).transpose((1, 0))
     x_train_index, x_test_index, y_train, y_test = [], [], [], []
     for i, n in zip(range(1, c+1, 1), lists):
@@ -180,42 +201,45 @@ def custom_train_index(is_train, training_labels, c, lists):
         i_index_random = np.random.choice(i_index, n, replace=False)
         i_index_rest = [k for k in i_index if k not in i_index_random]
         i_train_index = index[i_index_random]
-        i_train_labels = np.ones(len(i_index_random))* i
+        i_train_labels = np.ones(len(i_index_random)) * i
         i_test_index = index[i_index_rest]
-        i_test_labels = np.ones(len(i_test_index))* i
+        i_test_labels = np.ones(len(i_test_index)) * i
         x_train_index.append(i_train_index)
         x_test_index.append(i_test_index)
         y_train.append(i_train_labels)
         y_test.append(i_test_labels)
+
     x_train_index = np.concatenate(x_train_index, axis=0)
     x_test_index = np.concatenate(x_test_index, axis=0)
     y_train = np.concatenate(y_train, axis=0)
     y_test = np.concatenate(y_test, axis=0)
-    x_train_index, _, y_train, _ = train_test_split(x_train_index, y_train, test_size=0, shuffle=True)
-    x_test_index, _, y_test, _ = train_test_split(x_test_index, y_test, test_size=0, shuffle=True)
+
+    x_train_index, y_train = get_shuffle(x_train_index, y_train)
+    x_test_index, y_test = get_shuffle(x_test_index, y_test)
+    # x_train_index, _, y_train, _ = train_test_split(x_train_index, y_train, test_size=0, shuffle=True)
+    # x_test_index, _, y_test, _ = train_test_split(x_test_index, y_test, test_size=0, shuffle=True)
     return x_train_index, x_test_index, y_train, y_test
 
 
-def get_train_sample(data_path, train_data_path, c, lists, d, norma_methods='z-score', pca=False, m=1, n=3):
+def get_train_sample(data_path, train_data_path, c, lists, seed, norma_methods='z-score', m=1):
     bands_data, is_train, training_labels = get_prep_data(data_path, train_data_path,
-                                                          norma_method=norma_methods,
-                                                          pca=pca, n=n)
-    x_train_index, _, train_labels, _ = custom_train_index(is_train, training_labels,
-                                                           c=c, lists=lists)
+                                                          norma_method=norma_methods)
+    x_train_index, _, train_labels, _ = custom_train_index(seed, is_train, training_labels,
+                                                           c, lists)
     samples = []
     if m == 1:
         for i in x_train_index:
             sample = bands_data[i[0], i[1]]
             samples.append(sample)
         train_samples = np.stack(samples)
-        if d == 3:
-            train_samples = train_samples.reshape((train_samples.shape[0], train_samples.shape[1], -1))
+        # if d == 3:
+        #     train_samples = train_samples.reshape((train_samples.shape[0], train_samples.shape[1], -1))
 
     else:
         n = int((m - 1) / 2)
-        x_train_nindex = x_train_index + n
-        bands_data = np.pad(bands_data, ((n, n), (n, n), (0, 0)), 'constant', constant_values=0)
-        for j in x_train_nindex:
+        # x_train_nindex = x_train_index + n
+        # bands_data = np.pad(bands_data, ((n, n), (n, n), (0, 0)), 'constant', constant_values=0)
+        for j in x_train_index:
             k1 = j[0] - n
             k2 = j[0] + n + 1
             k3 = j[1] - n
@@ -223,17 +247,18 @@ def get_train_sample(data_path, train_data_path, c, lists, d, norma_methods='z-s
             block = bands_data[k1:k2, k3:k4]
             samples.append(block)
         train_samples = np.stack(samples, axis=0)
-        if d == 5:
-            train_samples = train_samples.reshape((train_samples.shape[0], train_samples.shape[1],
-                                                   train_samples.shape[2], train_samples.shape[3], -1))
+        # if d == 5:
+        #     train_samples = train_samples.reshape((train_samples.shape[0], train_samples.shape[1],
+        #                                            train_samples.shape[2], train_samples.shape[3], -1))
+    train_labels = one_hot_encode(c, train_labels)
+
     return train_samples, train_labels
 
 
-def get_test_predict(model, data_path, train_data_path, c, lists, bsize, norma_methods='z-score', pca=False, m=1, n=3):
+def get_test_predict(model, data_path, train_data_path, seed, c, lists, bsize, norma_methods='z-score', m=1):
     bands_data, is_train, training_labels = get_prep_data(data_path, train_data_path,
-                                                          norma_method=norma_methods,
-                                                          pca=pca, n=n)
-    _, x_test_index, _, y_test = custom_train_index(is_train, training_labels, c=c, lists=lists)
+                                                          norma_method=norma_methods)
+    _, x_test_index, _, y_test = custom_train_index(seed, is_train, training_labels, c, lists)
     samples = []
     predicts = []
     if m == 1:
@@ -247,17 +272,17 @@ def get_test_predict(model, data_path, train_data_path, c, lists, bsize, norma_m
 
     else:
         n = int((m - 1) / 2)
-        x_test_nindex = x_test_index + n
-        bands_data = np.pad(bands_data, ((n, n), (n, n), (0, 0)), 'constant', constant_values=0)
-        for i, j in enumerate(x_test_nindex):
+        # x_test_nindex = x_test_index + n
+        # bands_data = np.pad(bands_data, ((n, n), (n, n), (0, 0)), 'constant', constant_values=0)
+        for i, j in enumerate(x_test_index):
             k1 = j[0] - n
             k2 = j[0] + n + 1
             k3 = j[1] - n
             k4 = j[1] + n + 1
             block = bands_data[k1:k2, k3:k4]
             samples.append(block)
-            if len(samples) == bsize or i == x_test_nindex.shape[0] - 1:
-                # print("Batches Predictions...")
+            if len(samples) == bsize or i == x_test_index.shape[0] - 1:
+                print("Batches Predictions...")
                 pre = np.stack(samples)
                 if len(model.input.shape) == 5:
                     pre = pre.reshape((pre.shape[0], pre.shape[1], pre.shape[2], pre.shape[3], -1))
@@ -266,57 +291,55 @@ def get_test_predict(model, data_path, train_data_path, c, lists, bsize, norma_m
                 samples = []
         predicts = np.concatenate(predicts)
     print("Batches Predictions Finish!!!")
-    OA, KAPPA = print_plot_cm(y_test, predicts)
-    return OA, KAPPA
-    # return predicts
+    oa, kappa = print_plot_cm(y_test, predicts)
+    return oa, kappa
 
 
-def write_out_whole_predicts(model, data_path, bsize, norma_methods='z-score', pca=False, m=1, n=3):
-    # bands_data_dict = sio.loadmat(data_path)
-    # bands_data = bands_data_dict[list(bands_data_dict.keys())[-1]]
-    rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(
-        raster_data_path=data_path)
-    bands_data = norma_data(bands_data, norma_methods=norma_methods)
-    if pca is True:
-        bands_data = pca_data(bands_data, n=n)
-    if m == 1:
-        if len(model.input.shape) == 2:
-            pre = bands_data.reshape((bands_data.shape[0]*bands_data.shape[1], bands_data.shape[2]))
-        else:
-            pre = bands_data.reshape((bands_data.shape[0]*bands_data.shape[1], bands_data.shape[2], -1))
-        predicts = model.predict(pre)
-    else:
-        n = int((m - 1) / 2)
-        bands_data = np.pad(bands_data, ((n, n), (n, n), (0, 0)), 'constant', constant_values=0)
-        cols = bands_data.shape[1]-2*n
-        rows = bands_data.shape[0]-2*n
-        result = []
-        predicts = []
-        for i in range(0, rows, 1):
-            for j in range(0, cols, 1):
-                data = bands_data[i: i + m, j: j + m, :]
-                result.append(data)
-                if len(result) == bsize or i == int(rows-1):
-                    print("Batches Predictions...")
-                    pre = np.stack(result)
-                    if len(model.input.shape) == 5:
-                        pre = pre.reshape((pre.shape[0], pre.shape[1], pre.shape[2], pre.shape[3], -1))
-                    predict = model.predict(pre)
-                    predicts.append(predict)
-                    result = []
-        predicts = np.concatenate(predicts)
-        print("Batches Predictions Finish!!!")
-    return predicts
-    # write_classification_result2(predicts, shape)
-    # write_classification_prob(predicts, shape)
+# def write_out_whole_predicts(model, data_path, bsize, norma_methods='z-score', m=1):
+#     # bands_data_dict = sio.loadmat(data_path)
+#     # bands_data = bands_data_dict[list(bands_data_dict.keys())[-1]]
+#     rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(
+#         raster_data_path=data_path)
+#     bands_data = norma_data(bands_data, norma_methods=norma_methods)
+#     # if pca is True:
+#     #     bands_data = pca_data(bands_data, n=n)
+#     if m == 1:
+#         if len(model.input.shape) == 2:
+#             pre = bands_data.reshape((bands_data.shape[0]*bands_data.shape[1], bands_data.shape[2]))
+#         else:
+#             pre = bands_data.reshape((bands_data.shape[0]*bands_data.shape[1], bands_data.shape[2], -1))
+#         predicts = model.predict(pre)
+#     else:
+#         n = int((m - 1) / 2)
+#         bands_data = np.pad(bands_data, ((n, n), (n, n), (0, 0)), 'constant', constant_values=0)
+#         cols = bands_data.shape[1]-2*n
+#         rows = bands_data.shape[0]-2*n
+#         result = []
+#         predicts = []
+#         for i in range(0, rows, 1):
+#             for j in range(0, cols, 1):
+#                 data = bands_data[i: i + m, j: j + m, :]
+#                 result.append(data)
+#                 if len(result) == bsize or i == int(rows-1):
+#                     print("Batches Predictions...")
+#                     pre = np.stack(result)
+#                     if len(model.input.shape) == 5:
+#                         pre = pre.reshape((pre.shape[0], pre.shape[1], pre.shape[2], pre.shape[3], -1))
+#                     predict = model.predict(pre)
+#                     predicts.append(predict)
+#                     result = []
+#         predicts = np.concatenate(predicts)
+#         print("Batches Predictions Finish!!!")
+#     return predicts
+#     # write_classification_result2(predicts, shape)
+#     # write_classification_prob(predicts, shape)
 
-
-def write_train_region_predicts(model, data_path, train_data_path,
-                                bsize, norma_methods='z-score', pca=False, m=1, n=3):
+def write_region_predicts(model, data_path, train_data_path,
+                          bsize, norma_methods='z-score', m=1):
     bands_data, is_train, _ = get_mat_info(data_path, train_data_path)
-    bands_data = norma_data(bands_data, norma_methods=norma_methods)
-    if pca is True:
-        bands_data = pca_data(bands_data, n=n)
+    bands_data = norma_data(bands_data, norma_methods)
+    # if pca is True:
+    #     bands_data = pca_data(bands_data, n=n)
     index = np.array(is_train).transpose((1, 0))
     samples = []
     if m == 1:
@@ -330,8 +353,8 @@ def write_train_region_predicts(model, data_path, train_data_path,
     else:
         predicts = []
         n = int((m - 1) / 2)
-        index = index + n
-        bands_data = np.pad(bands_data, ((n, n), (n, n), (0, 0)), 'constant', constant_values=0)
+        # index = index + n
+        # bands_data = np.pad(bands_data, ((n, n), (n, n), (0, 0)), 'constant', constant_values=0)
         for i, j in enumerate(index):
             k1 = j[0] - n
             k2 = j[0] + n + 1
@@ -349,131 +372,138 @@ def write_train_region_predicts(model, data_path, train_data_path,
                 samples = []
         predicts = np.concatenate(predicts)
         print("Batches Predictions Finish!!!")
+
     return predicts
-    # write_classification_result3(predicts, train_data_path, shape)
 
 
-def get_fusion_features_from_test(model1, model2, data_path, train_data_path, c, lists, m):
-    extractor_from_model1, extractor_from_model2 = feature_extractor(model1, model2)
-    bands_data, is_train, train_labels = get_prep_data(data_path, train_data_path)
-    _, test_index, _, y_test = custom_train_index(is_train, train_labels, c, lists)
-    features1 = []
-    for i in test_index:
-        feature = bands_data[i[0], i[1]]
-        features1.append(feature)
-    features1 = np.stack(features1)
-    features1 = features1.reshape((features1.shape[0], features1.shape[1], -1))
-    features1 = extractor_from_model1([features1])[0]
-    features2 = []
-    samples = []
-    n = int((m - 1) / 2)
-    x_test_nindex = test_index + n
-    bands_data = np.pad(bands_data, ((n, n), (n, n), (0, 0)), 'constant', constant_values=0)
-    for i, j in enumerate(x_test_nindex):
-        k1 = j[0] - n
-        k2 = j[0] + n + 1
-        k3 = j[1] - n
-        k4 = j[1] + n + 1
-        block = bands_data[k1:k2, k3:k4]
-        samples.append(block)
-        if len(samples) == 3200 or i == x_test_nindex.shape[0] - 1:
-            print("Batches Features...")
-            pre = np.stack(samples)
-            feature = extractor_from_model2([pre])[0]
-            features2.append(feature)
-            samples = []
-    features2 = np.concatenate(features2)
-    fusion_features = np.concatenate([features1, features2], axis=1)
-    return fusion_features, y_test
+# def get_fusion_features_from_test(model1, model2, data_path, train_data_path, c, lists, m):
+#     extractor_from_model1, extractor_from_model2 = feature_extractor(model1, model2)
+#     bands_data, is_train, train_labels = get_prep_data(data_path, train_data_path)
+#     _, test_index, _, y_test = custom_train_index(is_train, train_labels, c, lists)
+#     features1 = []
+#     for i in test_index:
+#         feature = bands_data[i[0], i[1]]
+#         features1.append(feature)
+#     features1 = np.stack(features1)
+#     features1 = features1.reshape((features1.shape[0], features1.shape[1], -1))
+#     features1 = extractor_from_model1([features1])[0]
+#     features2 = []
+#     samples = []
+#     n = int((m - 1) / 2)
+#     x_test_nindex = test_index + n
+#     bands_data = np.pad(bands_data, ((n, n), (n, n), (0, 0)), 'constant', constant_values=0)
+#     for i, j in enumerate(x_test_nindex):
+#         k1 = j[0] - n
+#         k2 = j[0] + n + 1
+#         k3 = j[1] - n
+#         k4 = j[1] + n + 1
+#         block = bands_data[k1:k2, k3:k4]
+#         samples.append(block)
+#         if len(samples) == 3200 or i == x_test_nindex.shape[0] - 1:
+#             print("Batches Features...")
+#             pre = np.stack(samples)
+#             feature = extractor_from_model2([pre])[0]
+#             features2.append(feature)
+#             samples = []
+#     features2 = np.concatenate(features2)
+#     fusion_features = np.concatenate([features1, features2], axis=1)
+#     return fusion_features, y_test
 
 
-def get_fusion_features_from_whole(model1, model2, data_path, m):
-    extractor_from_model1, extractor_from_model2 = feature_extractor(model1, model2)
-    bands_data_dict = sio.loadmat(data_path)
-    bands_data_1 = bands_data_dict[list(bands_data_dict.keys())[-1]]
-    bands_data_1 = norma_data(bands_data_1)
-    features1 = bands_data_1.reshape((bands_data_1.shape[0] * bands_data_1.shape[1], bands_data_1.shape[2], -1))
-    f1 = extractor_from_model1([features1])[0]
+# def get_fusion_features_from_whole(model1, model2, data_path, m):
+#     extractor_from_model1, extractor_from_model2 = feature_extractor(model1, model2)
+#     bands_data_dict = sio.loadmat(data_path)
+#     bands_data_1 = bands_data_dict[list(bands_data_dict.keys())[-1]]
+#     bands_data_1 = norma_data(bands_data_1)
+#     features1 = bands_data_1.reshape((bands_data_1.shape[0] * bands_data_1.shape[1], bands_data_1.shape[2], -1))
+#     f1 = extractor_from_model1([features1])[0]
+#
+#     n = int((m - 1) / 2)
+#     bands_data_1 = np.pad(bands_data_1, ((n, n), (n, n), (0, 0)), 'constant', constant_values=0)
+#     cols = bands_data_1.shape[1] - 2 * n
+#     rows = bands_data_1.shape[0] - 2 * n
+#     result1 = []
+#     f2 = []
+#     for g in range(0, rows, 1):
+#         for h in range(0, cols, 1):
+#             data = bands_data_1[g: g + m, h: h + m, :]
+#             result1.append(data)
+#             if len(result1) == 1600 or g == int(rows - 1):
+#                 print("Batches Features...")
+#                 pre1 = np.stack(result1)
+#                 fe = extractor_from_model2([pre1])[0]
+#                 f2.append(fe)
+#                 result1 = []
+#     f2 = np.concatenate(f2)
+#
+#     f3 = np.concatenate([f1, f2], axis=1)
+#     return f3
 
-    n = int((m - 1) / 2)
-    bands_data_1 = np.pad(bands_data_1, ((n, n), (n, n), (0, 0)), 'constant', constant_values=0)
-    cols = bands_data_1.shape[1] - 2 * n
-    rows = bands_data_1.shape[0] - 2 * n
-    result1 = []
-    f2 = []
-    for g in range(0, rows, 1):
-        for h in range(0, cols, 1):
-            data = bands_data_1[g: g + m, h: h + m, :]
-            result1.append(data)
-            if len(result1) == 1600 or g == int(rows - 1):
-                print("Batches Features...")
-                pre1 = np.stack(result1)
-                fe = extractor_from_model2([pre1])[0]
-                f2.append(fe)
-                result1 = []
-    f2 = np.concatenate(f2)
 
-    f3 = np.concatenate([f1, f2], axis=1)
-    return f3
-
-
-def write_classification_result_tif(fname, classification, original_raster_data_path, m=1):
-    """Create a GeoTIFF file with the given data."""
-    rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(raster_data_path=original_raster_data_path)
-    driver = gdal.GetDriverByName('GTiff')
-    classification = classification.reshape((rows, cols))
-    dataset = driver.Create(fname, cols, rows, 1, gdal.GDT_Byte)
-    dataset.SetGeoTransform(geo_transform)
-    dataset.SetProjection(proj)
-    band = dataset.GetRasterBand(1)
-    band.WriteArray(classification)
-    dataset = None  # close the file
+# def write_classification_result_tif(fname, classification, original_raster_data_path, m=1):
+#     """Create a GeoTIFF file with the given data."""
+#     rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(raster_data_path=original_raster_data_path)
+#     driver = gdal.GetDriverByName('GTiff')
+#     classification = classification.reshape((rows, cols))
+#     dataset = driver.Create(fname, cols, rows, 1, gdal.GDT_Byte)
+#     dataset.SetGeoTransform(geo_transform)
+#     dataset.SetProjection(proj)
+#     band = dataset.GetRasterBand(1)
+#     band.WriteArray(classification)
+#     dataset = None  # close the file
 
 
 # # write out whole image to RGB
 # # predict value form model, original image shape
-def write_whole_image_classification_result(predict, shape):
-    if predict.ndim == 2:
-        predict = np.argmax(predict, axis=-1) + 1
-    arr_2d = np.reshape(predict, shape)
-    plot_predicts(arr_2d)
+# def write_whole_image_classification_result(predict, shape):
+#     if predict.ndim == 2:
+#         predict = np.argmax(predict, axis=-1) + 1
+#     arr_2d = np.reshape(predict, shape)
+#     plot_predicts(arr_2d)
 
 
-def write_whole_image_predicts_prob(predict, shape):
-    max_prob = np.max(predict, axis=1)
-    mean_prob = np.mean(predict, axis=1)
-    sec_max = []
-    for p in predict:
-        p = sorted(p)
-        second = p[-2]
-        sec_max.append(second)
-    conf1 = max_prob - sec_max
-    conf2 = max_prob - mean_prob
-    low_confidence0 = [x for x in max_prob if x < 0.5]
-    low_confidence1 = [x for x in conf1 if x < 0.5]
-    low_confidence2 = [x for x in conf2 if x < 0.5]
-    cof1 = len(low_confidence0)/(shape[0]*shape[1])
-    cof2 = len(low_confidence1)/(shape[0]*shape[1])
-    cof3 = len(low_confidence2)/(shape[0]*shape[1])
-    # print("cof1:{}, cof2:{}, cof3: {}".format(cof1, cof2, cof3))
-    # prob_img = np.reshape(conf, shape)
-    # fig = plt.figure()
-    # fig.add_subplot(121)
-    # plt.xlabel("Confidences")
-    # plt.ylabel("Numbers")
-    # plt.hist(conf, bins=10, range=(0, 1), facecolor='red', alpha=0.5)
-    #
-    # fig.add_subplot(122)
-    # sn.heatmap(prob_img, annot=False, cmap="Greys_r", xticklabels=False, yticklabels=False)
-    # plt.imshow(prob_img, cmap='gray')
-    #
+# def write_whole_image_predicts_prob(predict, shape):
+#     max_prob = np.max(predict, axis=1)
+#     mean_prob = np.mean(predict, axis=1)
+#     sec_max = []
+#     for p in predict:
+#         p = sorted(p)
+#         second = p[-2]
+#         sec_max.append(second)
+#     conf1 = max_prob - sec_max
+#     conf2 = max_prob - mean_prob
+#     low_confidence0 = [x for x in max_prob if x < 0.5]
+#     low_confidence1 = [x for x in conf1 if x < 0.5]
+#     low_confidence2 = [x for x in conf2 if x < 0.5]
+#     cof1 = len(low_confidence0)/(shape[0]*shape[1])
+#     cof2 = len(low_confidence1)/(shape[0]*shape[1])
+#     cof3 = len(low_confidence2)/(shape[0]*shape[1])
+#     # print("cof1:{}, cof2:{}, cof3: {}".format(cof1, cof2, cof3))
+#     # prob_img = np.reshape(conf, shape)
+#     # fig = plt.figure()
+#     # fig.add_subplot(121)
+#     # plt.xlabel("Confidences")
+#     # plt.ylabel("Numbers")
+#     # plt.hist(conf, bins=10, range=(0, 1), facecolor='red', alpha=0.5)
+#     #
+#     # fig.add_subplot(122)
+#     # sn.heatmap(prob_img, annot=False, cmap="Greys_r", xticklabels=False, yticklabels=False)
+#     # plt.imshow(prob_img, cmap='gray')
+#     #
+#     # plt.show()
+#     return cof1, cof2, cof3
+def plot_predicts(arr_2d):
+    arr_3d = np.zeros((arr_2d.shape[0], arr_2d.shape[1], 3), dtype=np.uint8)
+    for c, i in palette.items():
+        m = arr_2d == c
+        arr_3d[m] = i
+    plt.imshow(arr_3d)
     # plt.show()
-    return cof1, cof2, cof3
 
 
 # # write out labeled data given to RGB
 # # parameter: predict value from model, train_mat_data_path for is_train, original images shape
-def write_region_image_classification_result(predict, train_data_path, shape, filename):
+def write_region_image_classification_result_probs(predict, train_data_path, shape, filename):
     labeled_pixel_dict = sio.loadmat(train_data_path)
     labeled_pixel = labeled_pixel_dict[list(labeled_pixel_dict.keys())[-1]]
     is_train = np.nonzero(labeled_pixel)
@@ -481,13 +511,30 @@ def write_region_image_classification_result(predict, train_data_path, shape, fi
     #     labels = np.argmax(predict, axis=-1) + 1
     # else:
     #     labels = predict
-    labels = predict
-    label = np.zeros(shape)
-    for i, j, k in zip(is_train[0], is_train[1], labels):
-        label[i, j] = k
-    save_array_to_mat(label, filename=filename)
-    print("Save predicts success Check in " + filename)
-    # plot_predicts(arr_2d=label)
+    labels = np.argmax(predict, axis=-1) + 1
+    probs = np.max(predict, axis=1)
+    result = np.zeros(shape)
+    for i, j, k, p in zip(is_train[0], is_train[1], labels, probs):
+        result[i, j, 0] = k
+        result[i, j, 1] = p
+    print("Plotting the Results and Probabilities...")
+    plt.subplot(121)
+    plot_predicts(result[:, :, 0])
+    plt.subplot(122)
+    sn.heatmap(result[:, :, 1], annot=False, cmap="Greys_r", xticklabels=False, yticklabels=False)
+    plt.show()
+    print("Saving Predicts and Probabilities into Mat File....")
+    save_array_to_mat(result, filename=filename)
+    print("Save Predicts Success Check in " + filename)
+
+
+def plot_region_image_classification_result_prob(predict_mat_path):
+    result = get_mat(predict_mat_path)
+    plt.subplot(121)
+    plot_predicts(result[:, :, 0])
+    plt.subplot(122)
+    sn.heatmap(result[:, :, 1], annot=False, cmap="Greys_r", xticklabels=False, yticklabels=False)
+    plt.show()
 
 
 def print_plot_cm(y_true, y_pred):
@@ -495,10 +542,10 @@ def print_plot_cm(y_true, y_pred):
         y_pred = np.argmax(y_pred, axis=-1) + 1
     if y_true.ndim == 2:
         y_true = np.argmax(y_true, axis=-1) + 1
-    OA = accuracy_score(y_true, y_pred)
-    KAPPA = cohen_kappa_score(y_true, y_pred)
-    print("Overall Accuracy:{:.4%}".format(OA))
-    print("Kappa: ", KAPPA)
+    oa = accuracy_score(y_true, y_pred)
+    kappa = cohen_kappa_score(y_true, y_pred)
+    print("Overall Accuracy:{:.4%}".format(oa))
+    print("Kappa: ", kappa)
     print(classification_report(y_true, y_pred, digits=4))
     labels = sorted(list(set(y_true)))
     cm_data = confusion_matrix(y_true, y_pred, labels=labels)
@@ -506,7 +553,7 @@ def print_plot_cm(y_true, y_pred):
     plt.figure(figsize=(10, 7))
     sn.heatmap(df_cm, annot=True, cmap=plt.cm.Blues, fmt='0000')
     plt.show()
-    return OA, KAPPA
+    return oa, kappa
 
 
 # # statics samples classes info form labels. return a dict.
@@ -528,12 +575,12 @@ def norma_data(data, norma_methods="z-score"):
     norma_info = []
     for i in range(data.shape[-1]):
         array = data.transpose(2, 0, 1)[i, :, :]
-        min = np.min(array)
-        max = np.max(array)
+        mins = np.min(array)
+        maxs = np.max(array)
         mean = np.mean(array)
         std = np.std(array)
-        list = [min, max, mean, std]
-        norma_info.append(list)
+        lists = [mins, maxs, mean, std]
+        norma_info.append(lists)
     norma_info = np.stack(norma_info, axis=0)
     new_data = []
     for i, j in zip(range(norma_info.shape[0]), range(data.shape[-1])):
@@ -551,13 +598,13 @@ def norma_data(data, norma_methods="z-score"):
 
 
 # As for labeling, one pixel might be labeled more twice.So we delete those pixel by index.
-def delete_error_category(training_labels, training_samples):
-    category = np.unique(training_labels)
-    for i in category[20:]:
-        index = np.argwhere(training_labels == i)
-        training_labels = np.delete(training_labels, index)
-        training_samples = np.delete(training_samples, index, axis=0)
-    return training_samples, training_labels
+# def delete_error_category(training_labels, training_samples):
+#     category = np.unique(training_labels)
+#     for i in category[20:]:
+#         index = np.argwhere(training_labels == i)
+#         training_labels = np.delete(training_labels, index)
+#         training_samples = np.delete(training_samples, index, axis=0)
+#     return training_samples, training_labels
 
 
 # # palette is color map for rgb convert. preference setting.
@@ -629,17 +676,17 @@ def plot_history(network):
 #     return x_train_over1, y_train_over1
 
 
-def txt2xls(txt_path, xls_path, column):
-    df = pd.read_csv(txt_path, sep='\t', header=None)
-    new_df = df.iloc[np.arange(2, len(df), 3)]
-    new_df = new_df[0].str.split(',', expand=True)
-    l = []
-    for i in range(0, len(column)):
-        nd = new_df[i]
-        nd = nd.str.split(':', expand=True)
-        nd = nd.drop(0, axis=1)
-        nd.rename(columns={1: column[i]}, inplace=True)
-        l.append(nd)
-    ne_d = pd.concat(l, axis=1)
-    ne_d[column[1:]] = ne_d[column[1:]].apply(pd.to_numeric)
-    ne_d.to_excel(xls_path, index=False)
+# def txt2xls(txt_path, xls_path, column):
+#     df = pd.read_csv(txt_path, sep='\t', header=None)
+#     new_df = df.iloc[np.arange(2, len(df), 3)]
+#     new_df = new_df[0].str.split(',', expand=True)
+#     l = []
+#     for i in range(0, len(column)):
+#         nd = new_df[i]
+#         nd = nd.str.split(':', expand=True)
+#         nd = nd.drop(0, axis=1)
+#         nd.rename(columns={1: column[i]}, inplace=True)
+#         l.append(nd)
+#     ne_d = pd.concat(l, axis=1)
+#     ne_d[column[1:]] = ne_d[column[1:]].apply(pd.to_numeric)
+#     ne_d.to_excel(xls_path, index=False)
