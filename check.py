@@ -21,7 +21,23 @@ model_path = pwd + r"model/"
 # (541546.573, 1.0, -0.0, 2957730.452, -0.0, -1.0)
 lists = [400, 400, 400, 400, 400, 400, 400, 400]
 
-model_list = ["MLP.h5", "CNN_33.h5", "CNN_65.h5", "CNN_49.h5"]
+model_list = ["CNN_33.h5", "CNN_65.h5", "CNN_49.h5"]
+
+# results = get_mat(model_path + 'MLP_pre.mat')
+# print(np.unique(results[:, :, 1]))
+# probs = np.max(results, axis=-1)
+# sn.heatmap(probs, annot=False, cmap="Greys_r", xticklabels=False, yticklabels=False)
+# plt.show()
+# plt.subplots(121)
+
+# plt.subplot(122)
+# train_samples, train_labels = get_train_sample(data_path=mat_images_path, train_data_path=mat_labels_path,
+#                                                c=8, lists=lists, seed=20, norma_methods='z-score')
+# print(train_samples.shape, train_labels.shape, train_samples[:10])
+# model1 = tf.keras.models.load_model(model_path + 'MLP.h5')
+# model2 = tf.keras.models.load_model(model_path + 'CNN_33.h5')
+# get_test_predict(model=model2, data_path=mat_images_path, train_data_path=mat_labels_path, seed=10,
+#                  c=8, lists=lists, bsize=10000, norma_methods='min-max', m=33)
 for i in model_list:
     print("Loading Model:" + i)
     model = tf.keras.models.load_model(model_path + i)
@@ -35,12 +51,12 @@ for i in model_list:
                                          train_data_path=mat_region_path, bsize=10000,
                                          norma_methods='min-max', m=int(i.split('_')[-1].split(".")[0]))
     print("Model Inference Finished, Result output.....")
-    # write_region_image_classification_result(predicts, train_data_path=mat_region_path,
-    #                                          shape=(7500, 5000, 8), filename=pwd+i.split(".")[0]+'_pre.mat')
-
+    write_region_image_classification_result_probs(predicts, train_data_path=mat_region_path,
+                                                   shape=(7500, 5000, 2),
+                                                   filename=model_path+i.split(".")[0]+'_pre.mat')
 # split_vector(vector_path=vector, save_path=pwd + 'vector/new_shp/')
 # segments = get_centroid_index(segments_path=segments_path)
-
+# plot_region_image_classification_result_prob(predict_mat_path=model_path+'MLP_pre.mat')
 # print(segments['R'])
 # rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(raster_data_path=file_path)
 # bands_data = norma_data(bands_data, norma_methods='z-score')
