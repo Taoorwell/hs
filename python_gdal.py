@@ -363,7 +363,7 @@ def write_region_predicts(model, data_path, train_data_path,
             block = bands_data[k1:k2, k3:k4]
             samples.append(block)
             if len(samples) == bsize or i == index.shape[0] - 1:
-                print("Batches Predictions...")
+                # print("Batches Predictions...")
                 pre = np.stack(samples)
                 if len(model.input.shape) == 5:
                     pre = pre.reshape((pre.shape[0], pre.shape[1], pre.shape[2], pre.shape[3], -1))
@@ -517,12 +517,12 @@ def write_region_image_classification_result_probs(predict, train_data_path, sha
     for i, j, k, p in zip(is_train[0], is_train[1], labels, probs):
         result[i, j, 0] = k
         result[i, j, 1] = p
-    print("Plotting the Results and Probabilities...")
-    plt.subplot(121)
-    plot_predicts(result[:, :, 0])
-    plt.subplot(122)
-    sn.heatmap(result[:, :, 1], annot=False, cmap="Greys_r", xticklabels=False, yticklabels=False)
-    plt.show()
+    # print("Plotting the Results and Probabilities...")
+    # plt.subplot(121)
+    # plot_predicts(result[:, :, 0])
+    # plt.subplot(122)
+    # sn.heatmap(result[:, :, 1], annot=False, cmap="Greys_r", xticklabels=False, yticklabels=False)
+    # plt.savefig(filename.split(".")[0] + ".png")
     print("Saving Predicts and Probabilities into Mat File....")
     save_array_to_mat(result, filename=filename)
     print("Save Predicts Success Check in " + filename)
@@ -533,7 +533,7 @@ def plot_region_image_classification_result_prob(predict_mat_path):
     plt.subplot(121)
     plot_predicts(result[:, :, 0])
     plt.subplot(122)
-    sn.heatmap(result[:, :, 1], annot=False, cmap="Greys_r", xticklabels=False, yticklabels=False)
+    plt.imshow(result[:, :, 1], cmap='YlGn')
     plt.show()
 
 
