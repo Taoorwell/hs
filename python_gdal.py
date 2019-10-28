@@ -533,7 +533,7 @@ def plot_region_image_classification_result_prob(predict_mat_path):
     plt.subplot(121)
     plot_predicts(result[:, :, 0])
     plt.subplot(122)
-    plt.imshow(result[:, :, 1], cmap='YlGn')
+    plt.imshow(result[:, :, 1], cmap='Spectral')
     plt.show()
 
 
