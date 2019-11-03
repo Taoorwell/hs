@@ -10,7 +10,7 @@ file_path = pwd + r"images/GF2_4314_GS_2.dat"
 vector_path = pwd + r"vector/new_shp"
 vector = pwd + r"vector/new_samples.shp"
 
-segments_path = pwd + r"sg/30_10_05.shp"
+segments_path = pwd + r"WORKSPACE/GF2_4314_GS_3.shp"
 # centroid_path = r"G:/GF/JL/sg/40_10_05_centroid_new.shp"
 
 mat_images_path = pwd + r'images/mat/GF_2.mat'
@@ -23,6 +23,15 @@ lists = [400, 400, 400, 400, 400, 400, 400, 400]
 
 model_list = ["CNN_33.h5", "CNN_65.h5", "CNN_49.h5"]
 
+model2 = tf.keras.models.load_model(model_path+model_list[-1])
+model2.summary()
+print("MODEL LOADING SUCCESS!!!")
+
+segments = get_predicts_segments(segments_path=segments_path, image_mat_path=mat_images_path,
+                                 norma_methods='min-max', m=49, model=model2)
+segments.to_file(filename=pwd + r"WORKSPACE/GF2_4314_GS_3_PRE.shp")
+
+print("FILE EXPORT SUCCESS! CHECK")
 # results = get_mat(model_path + 'MLP_pre.mat')
 # print(np.unique(results[:, :, 1]))
 # probs = np.max(results, axis=-1)
@@ -58,7 +67,7 @@ model_list = ["CNN_33.h5", "CNN_65.h5", "CNN_49.h5"]
 # split_vector(vector_path=vector, save_path=pwd + 'vector/new_shp/')
 # segments = get_centroid_index(segments_path=segments_path)
 
-plot_region_image_classification_result_prob(predict_mat_path=model_path+'CNN_65_pre.mat')
+# plot_region_image_classification_result_prob(predict_mat_path=model_path+'CNN_65_pre.mat')
 # print(segments['R'])
 # rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(raster_data_path=file_path)
 # bands_data = norma_data(bands_data, norma_methods='z-score')
