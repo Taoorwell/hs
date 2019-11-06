@@ -86,43 +86,47 @@ def get_raster_info(raster_data_path):
 
 
 # read shapefiles of label, And rasterize layer with according label values.used together with below func.
-def create_mask_from_vector(vector_data_path, cols, rows, geo_transform,
-                            projection, target_value=1):
+def vectors_to_raster(vector_data_path, cols, rows, geo_transform,
+                      projection):
     data_source = gdal.OpenEx(vector_data_path, gdal.OF_VECTOR)
     layer = data_source.GetLayer(0)
     driver = gdal.GetDriverByName('MEM')
     target_ds = driver.Create('', cols, rows, 1, gdal.GDT_UInt16)
     target_ds.SetGeoTransform(geo_transform)
     target_ds.SetProjection(projection)
-    gdal.RasterizeLayer(target_ds, [1], layer, burn_values=[target_value])
-    return target_ds
 
+    gdal.RasterizeLayer(target_ds, [1], layer, None, None, [0], ['ALL_TOUCHED=TRUE', 'ATTRIBUTE=CLASS_ID'])
 
-# return label_pixel including geo information and index.
-def vectors_to_raster(vector_path, rows, cols, geo_transform, projection):
-    """Rasterize the vectors in given directory in a single image."""
-    files = [f for f in os.listdir(vector_path) if f.endswith('.shp')]
-    classes = [f.split('.')[0] for f in files]
-    shapefiles = [os.path.join(vector_path, f) for f in files]
-    labeled_pixels = np.zeros((rows, cols))
-    for i, path in zip(classes, shapefiles):
-        label = int(i)
-        ds = create_mask_from_vector(path, cols, rows, geo_transform,
-                                     projection, target_value=label)
-        band = ds.GetRasterBand(1)
-        labeled_pixels += band.ReadAsArray()
-        # ds = None
+    labeled_pixels = target_ds.GetRasterBand(1).ReadAsArray()
     is_train = np.nonzero(labeled_pixels)
     return labeled_pixels, is_train
 
 
-def vectors_to_raster1(vector_path, rows, cols, geo_transform, projection):
-    labeled_pixels = np.zeros((rows, cols))
-    ds = create_mask_from_vector(vector_path, cols, rows, geo_transform,
-                                 projection, target_value=1)
-    band = ds.GetRasterBand(1)
-    labeled_pixels += band.ReadAsArray()
-    return labeled_pixels
+# return label_pixel including geo information and index.
+# def vectors_to_raster(vector_path, rows, cols, geo_transform, projection):
+#     """Rasterize the vectors in given directory in a single image."""
+#     files = [f for f in os.listdir(vector_path) if f.endswith('.shp')]
+#     classes = [f.split('.')[0] for f in files]
+#     shapefiles = [os.path.join(vector_path, f) for f in files]
+#     labeled_pixels = np.zeros((rows, cols))
+#     for i, path in zip(classes, shapefiles):
+#         label = int(i)
+#         ds = create_mask_from_vector(path, cols, rows, geo_transform,
+#                                      projection, target_value=label)
+#         band = ds.GetRasterBand(1)
+#         labeled_pixels += band.ReadAsArray()
+#         # ds = None
+#     is_train = np.nonzero(labeled_pixels)
+#     return labeled_pixels, is_train
+
+
+# def vectors_to_raster1(vector_path, rows, cols, geo_transform, projection):
+#     labeled_pixels = np.zeros((rows, cols))
+#     ds = create_mask_from_vector(vector_path, cols, rows, geo_transform,
+#                                  projection, target_value=1)
+#     band = ds.GetRasterBand(1)
+#     labeled_pixels += band.ReadAsArray()
+#     return labeled_pixels
 
 
 # # due to hyperspectral images datasets on web is .mat format, using scipy.sio read .mat data

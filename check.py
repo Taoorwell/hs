@@ -23,15 +23,40 @@ lists = [400, 400, 400, 400, 400, 400, 400, 400]
 
 model_list = ["CNN_33.h5", "CNN_65.h5", "CNN_49.h5"]
 
-model2 = tf.keras.models.load_model(model_path+model_list[0])
-model2.summary()
-print("MODEL LOADING SUCCESS!!!")
+rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(
+    raster_data_path=pwd + "images/GF2_4314_GS_2.dat")
+labeled_pixels, is_train = vectors_to_raster(vector_data_path=pwd+"vector/train_samples_0611.shp",
+                                             cols=cols, rows=rows, geo_transform=geo_transform,
+                                             projection=proj)
+print(labeled_pixels.shape)
+print(get_samples_info(labeled_pixels[is_train]))
+# # split train data and test data for
+##################################################
+# train_vector = gpd.read_file(pwd + "vector/train_samples_0411.shp")
+# print(train_vector)
+# id = [int(x) for x in train_vector['CLASS_ID']]
+# print(id)
+# train_vector['id'] = id
+# print(train_vector.columns)
+# train_vector.to_file(filename=pwd + "train_samples_0411_id.shp")
 
-segments = get_predicts_segments(segments_path=segments_path, image_mat_path=mat_images_path,
-                                 norma_methods='min-max', m=33, model=model2)
-segments.to_file(filename=pwd + r"images/WORKSPACE/GF2_4314_GS_3_PRE_33.shp")
+# train_vector_1 = train_vector[train_vector['CLASS_ID'] == '1']
+# print(train_vector_1)
 
-print("FILE EXPORT SUCCESS! CHECK")
+# rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(
+#     raster_data_path=pwd + "images/GF2_4314_GS_2.dat")
+# layer = data_source.GetLayer(0)
+
+# model2 = tf.keras.models.load_model(model_path+model_list[0])
+# model2.summary()
+# print("MODEL LOADING SUCCESS!!!")
+#
+# segments = get_predicts_segments(segments_path=segments_path, image_mat_path=mat_images_path,
+#                                  norma_methods='min-max', m=33, model=model2)
+# segments.to_file(filename=pwd + r"images/WORKSPACE/GF2_4314_GS_3_PRE_33.shp")
+#
+# print("FILE EXPORT SUCCESS! CHECK")
+######################################################
 # results = get_mat(model_path + 'MLP_pre.mat')
 # print(np.unique(results[:, :, 1]))
 # probs = np.max(results, axis=-1)
