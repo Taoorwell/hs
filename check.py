@@ -23,13 +23,27 @@ lists = [400, 400, 400, 400, 400, 400, 400, 400]
 
 model_list = ["CNN_33.h5", "CNN_65.h5", "CNN_49.h5"]
 
+# samples = gpd.read_file(pwd+"vector/test_samples_0711.shp")
+# classes = np.unique(samples['CLASS_ID'])
+# single = samples[samples['CLASS_ID'] == classes[0]]
+# print(r'{}.shp'.format(classes[0]))
+# print(single)
+# split_vector(vector_path=pwd+"vector/test_samples_0711.shp", save_path=pwd+"vector/new_shp/")
 rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(
     raster_data_path=pwd + "images/GF2_4314_GS_2.dat")
-labeled_pixels, is_train = vectors_to_raster(vector_data_path=pwd+"vector/train_samples_0611.shp",
+labeled_pixels, is_train = vectors_to_raster(vector_data_path=pwd+"vector/train_samples_0711.shp",
                                              cols=cols, rows=rows, geo_transform=geo_transform,
                                              projection=proj)
-print(labeled_pixels.shape)
-print(get_samples_info(labeled_pixels[is_train]))
+plot_predicts(labeled_pixels)
+plt.show()
+# # train_samples = labeled_pixels[is_train]
+# # print(train_samples)
+# print(labeled_pixels.shape)
+# print(get_samples_info(labeled_pixels[is_train]))
+# save_array_to_mat(labeled_pixels, filename=pwd+r"images/mat/GF_2_LABEL.mat")
+
+# print(labeled_pixels.shape)
+# print(get_samples_info(labeled_pixels[is_train]))
 # # split train data and test data for
 ##################################################
 # train_vector = gpd.read_file(pwd + "vector/train_samples_0411.shp")
