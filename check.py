@@ -176,11 +176,11 @@ model1 = tf.keras.models.Sequential([tf.keras.layers.Dense(32, activation='relu'
                                     tf.keras.layers.Dropout(0.1),
                                     tf.keras.layers.Dense(32, activation='relu'),
                                     tf.keras.layers.Dropout(0.1),
-                                    tf.keras.layers.Dense(8, activation='softmax')])
+                                    tf.keras.layers.Dense(7, activation='softmax')])
 
 model1.compile(optimizer=tf.keras.optimizers.Adam(lr=0.001), loss='categorical_crossentropy', metrics=['accuracy'])
 model1.summary()
-model1.fit(train_samples, train_labels, batch_size=30, epochs=500)
+model1.fit(train_samples, train_labels, batch_size=30, epochs=1000)
 # model1.save(pwd + r"model/MLP.h5")
 #
 # train_samples, train_labels = get_train_sample(data_path=mat_images_path, train_data_path=mat_labels_path,
