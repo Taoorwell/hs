@@ -165,12 +165,12 @@ m = 33
 
 ###########################################################################
 
-train_samples, train_labels = get_train_sample(data_path=mat_images_path,
-                                               train_data_path=mat_labels_path,
-                                               c=7, lists=lists, seed=10,
-                                               norma_methods='min-max', m=m)
-
-print(train_samples.shape, train_labels.shape)
+# train_samples, train_labels = get_train_sample(data_path=mat_images_path,
+#                                                train_data_path=mat_labels_path,
+#                                                c=7, lists=lists, seed=10,
+#                                                norma_methods='min-max', m=m)
+#
+# print(train_samples.shape, train_labels.shape)
 
 # model1 = tf.keras.models.Sequential([tf.keras.layers.Dense(32, activation='relu', input_shape=(4,)),
 #                                     tf.keras.layers.Dropout(0.1),
@@ -189,31 +189,36 @@ print(train_samples.shape, train_labels.shape)
 # train_labels = one_hot_encode(c=8, labels=train_labels)
 # print(train_samples.shape, train_labels.shape)
 # # #
-model2 = tf.keras.models.Sequential([tf.keras.layers.Conv2D(12, (3, 3), padding='same', input_shape=(m, m, 4)),
-                                     tf.keras.layers.BatchNormalization(),
-                                     tf.keras.layers.Activation(activation='relu'),
-                                     tf.keras.layers.MaxPool2D(2, padding='same'),
-                                     tf.keras.layers.Conv2D(24, (3, 3), padding='same'),
-                                     tf.keras.layers.BatchNormalization(),
-                                     tf.keras.layers.Activation(activation='relu'),
-                                     tf.keras.layers.MaxPool2D(2, padding='same'),
-                                     tf.keras.layers.Conv2D(48, (3, 3), padding='same'),
-                                     tf.keras.layers.BatchNormalization(),
-                                     tf.keras.layers.Activation(activation='relu'),
-                                     tf.keras.layers.MaxPool2D(2, padding='same'),
-                                     tf.keras.layers.Flatten(),
-                                     tf.keras.layers.Dense(32, activation='relu'),
-                                     tf.keras.layers.Dropout(0.1),
-                                     tf.keras.layers.Dense(7, activation='softmax')])
-model2.compile(optimizer=tf.keras.optimizers.Adam(lr=0.01), loss='categorical_crossentropy', metrics=['accuracy'])
-# model2.summary()
-# #
-model2.fit(train_samples, train_labels, batch_size=30, epochs=100)
-# model2 = tf.keras.models.load_model(r"G:/GF/JL/model/CNN_33.h5")
+# model2 = tf.keras.models.Sequential([tf.keras.layers.Conv2D(12, (3, 3), padding='same', input_shape=(m, m, 4)),
+#                                      tf.keras.layers.BatchNormalization(),
+#                                      tf.keras.layers.Activation(activation='relu'),
+#                                      tf.keras.layers.MaxPool2D(2, padding='same'),
+#                                      tf.keras.layers.Conv2D(24, (3, 3), padding='same'),
+#                                      tf.keras.layers.BatchNormalization(),
+#                                      tf.keras.layers.Activation(activation='relu'),
+#                                      tf.keras.layers.MaxPool2D(2, padding='same'),
+#                                      tf.keras.layers.Conv2D(48, (3, 3), padding='same'),
+#                                      tf.keras.layers.BatchNormalization(),
+#                                      tf.keras.layers.Activation(activation='relu'),
+#                                      tf.keras.layers.MaxPool2D(2, padding='same'),
+#                                      tf.keras.layers.Flatten(),
+#                                      tf.keras.layers.Dense(32, activation='relu'),
+#                                      tf.keras.layers.Dropout(0.1),
+#                                      tf.keras.layers.Dense(7, activation='softmax')])
+# model2.compile(optimizer=tf.keras.optimizers.Adam(lr=0.01), loss='categorical_crossentropy', metrics=['accuracy'])
+# # model2.summary()
+# # #
+# model2.fit(train_samples, train_labels, batch_size=30, epochs=100)
+model2 = tf.keras.models.load_model(r"G:/GF/JL/model/CNN_33.h5")
 
+oa, kappa = get_test_predict(model=model2,
+                             data_path=mat_images_path,
+                             train_data_path=mat_labels_path,
+                             seed=10, c=7, lists=lists, bsize=10000,
+                             norma_methods='min-max', m=m)
 # #
 # # # SAVE MODEL!!!!!!!!!!!!!!!
-model2.save(r"D:/JL/model/CNN_33.h5")
+# model2.save(r"D:/JL/model/CNN_33.h5")
 # print("Model Saved!!!")
 ################################################################################
 # MLP
