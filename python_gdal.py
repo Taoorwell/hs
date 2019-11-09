@@ -87,7 +87,7 @@ def get_raster_info(raster_data_path):
 
 # read shapefiles of label, And rasterize layer with according label values.used together with below func.
 def vectors_to_raster(vector_data_path, cols, rows, geo_transform,
-                       projection):
+                      projection):
     data_source = gdal.OpenEx(vector_data_path, gdal.OF_VECTOR)
     layer = data_source.GetLayer(0)
     driver = gdal.GetDriverByName('MEM')
