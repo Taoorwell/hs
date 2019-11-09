@@ -235,11 +235,10 @@ def custom_train_index(seed, is_train, training_labels, c, lists):
     return x_train_index, x_test_index, y_train, y_test
 
 
-def get_train_sample(data_path, train_data_path, c, lists, seed, norma_methods='z-score', m=1):
+def get_train_sample(data_path, train_data_path, c, norma_methods='z-score', m=1):
     bands_data, is_train, training_labels = get_prep_data(data_path, train_data_path,
                                                           norma_method=norma_methods)
-    x_train_index, _, train_labels, _ = custom_train_index(seed, is_train, training_labels,
-                                                           c, lists)
+    x_train_index = np.array(is_train).transpose((1, 0))
     samples = []
     if m == 1:
         for i in x_train_index:
@@ -264,15 +263,15 @@ def get_train_sample(data_path, train_data_path, c, lists, seed, norma_methods='
         # if d == 5:
         #     train_samples = train_samples.reshape((train_samples.shape[0], train_samples.shape[1],
         #                                            train_samples.shape[2], train_samples.shape[3], -1))
-    train_labels = one_hot_encode(c, train_labels)
+    train_labels = one_hot_encode(c, training_labels)
 
     return train_samples, train_labels
 
 
-def get_test_predict(model, data_path, train_data_path, seed, c, lists, bsize, norma_methods='z-score', m=1):
-    bands_data, is_train, training_labels = get_prep_data(data_path, train_data_path,
-                                                          norma_method=norma_methods)
-    _, x_test_index, _, y_test = custom_train_index(seed, is_train, training_labels, c, lists)
+def get_test_predict(model, data_path, test_data_path, bsize, norma_methods='z-score', m=1):
+    bands_data, is_test, test_labels = get_prep_data(data_path, test_data_path,
+                                                     norma_method=norma_methods)
+    x_test_index = np.array(is_test).transpose((1, 0))
     samples = []
     predicts = []
     if m == 1:
@@ -305,7 +304,7 @@ def get_test_predict(model, data_path, train_data_path, seed, c, lists, bsize, n
                 samples = []
         predicts = np.concatenate(predicts)
     print("Batches Predictions Finish!!!")
-    oa, kappa = print_plot_cm(y_test, predicts)
+    oa, kappa = print_plot_cm(test_labels, predicts)
     return oa, kappa
 
 
