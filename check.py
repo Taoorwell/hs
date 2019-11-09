@@ -29,13 +29,13 @@ model_list = ["CNN_33.h5", "CNN_65.h5", "CNN_49.h5"]
 # print(r'{}.shp'.format(classes[0]))
 # print(single)
 # split_vector(vector_path=pwd+"vector/test_samples_0711.shp", save_path=pwd+"vector/new_shp/")
-rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(
-    raster_data_path=pwd + "images/GF2_4314_GS_2.dat")
-labeled_pixels, is_train = vectors_to_raster(vector_data_path=pwd+"images/WORKSPACE/GF2_4314_GS_3_PRE_65.shp",
-                                             cols=cols, rows=rows, geo_transform=geo_transform,
-                                             projection=proj)
-plot_predicts(labeled_pixels)
-plt.show()
+# rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(
+#     raster_data_path=pwd + "images/GF2_4314_GS_2.dat")
+# labeled_pixels, is_train = vectors_to_raster(vector_data_path=pwd+"images/WORKSPACE/GF2_4314_GS_3_PRE_65.shp",
+#                                              cols=cols, rows=rows, geo_transform=geo_transform,
+#                                              projection=proj)
+# plot_predicts(labeled_pixels)
+# plt.show()
 # # train_samples = labeled_pixels[is_train]
 # # print(train_samples)
 # print(labeled_pixels.shape)
@@ -165,22 +165,22 @@ plt.show()
 
 ###########################################################################
 
-# train_samples, train_labels = get_train_sample(data_path=mat_images_path, train_data_path=mat_labels_path,
-#                                                c=8, lists=lists, d=2, norma_methods='min-max')
-#
-# train_labels = one_hot_encode(c=8, labels=train_labels)
-#
-# print(train_samples.shape, train_labels.shape)
-#
-# model1 = tf.keras.models.Sequential([tf.keras.layers.Dense(32, activation='relu', input_shape=(4,)),
-#                                     tf.keras.layers.Dropout(0.1),
-#                                     tf.keras.layers.Dense(32, activation='relu'),
-#                                     tf.keras.layers.Dropout(0.1),
-#                                     tf.keras.layers.Dense(8, activation='softmax')])
+train_samples, train_labels = get_train_sample(data_path=mat_images_path,
+                                               train_data_path=mat_labels_path,
+                                               c=7, lists=lists, seed=10,
+                                               norma_methods='min-max')
 
-# model1.compile(optimizer=tf.keras.optimizers.Adam(lr=0.001), loss='categorical_crossentropy', metrics=['accuracy'])
-# model1.summary()
-# model1.fit(train_samples, train_labels, batch_size=30, epochs=500)
+print(train_samples.shape, train_labels.shape)
+
+model1 = tf.keras.models.Sequential([tf.keras.layers.Dense(32, activation='relu', input_shape=(4,)),
+                                    tf.keras.layers.Dropout(0.1),
+                                    tf.keras.layers.Dense(32, activation='relu'),
+                                    tf.keras.layers.Dropout(0.1),
+                                    tf.keras.layers.Dense(8, activation='softmax')])
+
+model1.compile(optimizer=tf.keras.optimizers.Adam(lr=0.001), loss='categorical_crossentropy', metrics=['accuracy'])
+model1.summary()
+model1.fit(train_samples, train_labels, batch_size=30, epochs=500)
 # model1.save(pwd + r"model/MLP.h5")
 #
 # train_samples, train_labels = get_train_sample(data_path=mat_images_path, train_data_path=mat_labels_path,
