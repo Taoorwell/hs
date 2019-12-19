@@ -23,54 +23,7 @@ from sklearn.metrics import confusion_matrix, classification_report, cohen_kappa
 # projection and geo transformation.
 
 
-def split_vector(vector_path, save_path):
-    samples = gpd.read_file(vector_path)
-    classes = np.unique(samples['CLASS_ID'])
-    for i in classes:
-        single = samples[samples['CLASS_ID'] == i]
-        single.to_file(save_path + r'{}.shp'.format(i))
-    print("Split Finish" + " Check in " + save_path)
-
-
-def split_segments_predicts(segments, save_path):
-    classes = np.unique(segments['predicts'])
-    for i in classes:
-        single = segments[segments['predicts'] == i]
-        single.to_file(save_path + '{}.shp'.format(i))
-    print('Split Finish ' + " Check in " + save_path)
-
-
-def get_predicts_segments(segments_path, image_mat_path, norma_methods, m, model):
-    segments = gpd.read_file(segments_path)
-    x = segments.centroid.x
-    y = segments.centroid.y
-    segments['R'] = [int(a) for a in (2957730.452 - y)]
-    segments["C"] = [int(b) for b in (x - 541546.573)]
-    bands_data = get_mat(mat_data_path=image_mat_path)
-    bands_data = norma_data(bands_data, norma_methods)
-    n = int((m - 1) / 2)
-    samples = []
-    for x, y in tqdm(zip(segments['R'], segments['C'])):
-        k1 = x - n
-        k2 = x + n + 1
-        k3 = y - n
-        k4 = y + n + 1
-        block = bands_data[k1:k2, k3:k4]
-        samples.append(block)
-    print("Starting Predicts Segments...")
-    pre = model.predict(np.stack(samples))
-    print("Predicting Finish!!!")
-    predicts = np.argmax(pre, axis=-1) + 1
-    prob = np.max(pre, axis=1)
-    segments['predicts'] = predicts
-    segments['prob'] = prob
-    print("Save Results into Shapefiles Success!!")
-    return segments
-
-
-# def get_predicts_segments(model, ):
-
-
+# # Read raster data.
 def get_raster_info(raster_data_path):
     raster_dataset = gdal.Open(raster_data_path, gdal.GA_ReadOnly)
     geo_transform = raster_dataset.GetGeoTransform()
@@ -85,9 +38,9 @@ def get_raster_info(raster_data_path):
     return rows, cols, n_bands, bands_data, geo_transform, proj
 
 
-# read shapefiles of label, And rasterize layer with according label values.used together with below func.
-def vectors_to_raster(vector_data_path, cols, rows, geo_transform,
-                      projection):
+# Read shapefiles
+# Read shapefiles of label, And rasterize layer with according label values.used together with below func.
+def vectors_to_raster(vector_data_path, cols, rows, geo_transform, projection, filed="CLASS_ID"):
     data_source = gdal.OpenEx(vector_data_path, gdal.OF_VECTOR)
     layer = data_source.GetLayer(0)
     driver = gdal.GetDriverByName('MEM')
@@ -95,53 +48,14 @@ def vectors_to_raster(vector_data_path, cols, rows, geo_transform,
     target_ds.SetGeoTransform(geo_transform)
     target_ds.SetProjection(projection)
 
-    gdal.RasterizeLayer(target_ds, [1], layer, None, None, [0], ['ALL_TOUCHED=FALSE', 'ATTRIBUTE=CLASS_ID'])
+    gdal.RasterizeLayer(target_ds, [1], layer, None, None, [0], ['ALL_TOUCHED=FALSE', 'ATTRIBUTE={}'.format(filed)])
 
     labeled_pixels = target_ds.GetRasterBand(1).ReadAsArray()
     is_train = np.nonzero(labeled_pixels)
     return labeled_pixels, is_train
 
 
-# def create_mask_from_vector(vector_data_path, cols, rows, geo_transform,
-#                             projection, target_value=1):
-#     data_source = gdal.OpenEx(vector_data_path, gdal.OF_VECTOR)
-#     layer = data_source.GetLayer(0)
-#     driver = gdal.GetDriverByName('MEM')
-#     target_ds = driver.Create('', cols, rows, 1, gdal.GDT_UInt16)
-#     target_ds.SetGeoTransform(geo_transform)
-#     target_ds.SetProjection(projection)
-#     gdal.RasterizeLayer(target_ds, [1], layer, burn_values=[target_value])
-#     return target_ds
-#
-#
-# def vectors_to_raster(vector_path, rows, cols, geo_transform, projection):
-#     """Rasterize the vectors in given directory in a single image."""
-#     files = [f for f in os.listdir(vector_path) if f.endswith('.shp')]
-#     classes = [f.split('.')[0] for f in files]
-#     shapefiles = [os.path.join(vector_path, f) for f in files]
-#     labeled_pixels = np.zeros((rows, cols))
-#     for i, path in zip(classes, shapefiles):
-#         label = int(i)
-#         ds = create_mask_from_vector(path, cols, rows, geo_transform,
-#                                      projection, target_value=label)
-#         band = ds.GetRasterBand(1)
-#         labeled_pixels += band.ReadAsArray()
-#     is_train = np.nonzero(labeled_pixels)
-#     return labeled_pixels, is_train
-
-
-# def vectors_to_raster1(vector_path, rows, cols, geo_transform, projection):
-#     labeled_pixels = np.zeros((rows, cols))
-#     ds = create_mask_from_vector(vector_path, cols, rows, geo_transform,
-#                                  projection, target_value=1)
-#     band = ds.GetRasterBand(1)
-#     labeled_pixels += band.ReadAsArray()
-#     return labeled_pixels
-
-
-# # due to hyperspectral images datasets on web is .mat format, using scipy.sio read .mat data
-# # return is dict and bands data and labels ndarray is last key value.
-# # get is_train from labels ndarry and generate training labels and bands data and is_train.
+# Read and Write mat data.
 def get_mat(mat_data_path):
     bands_data_dict = sio.loadmat(mat_data_path)
     bands_data = bands_data_dict[list(bands_data_dict.keys())[-1]]
@@ -161,22 +75,7 @@ def save_array_to_mat(array, filename):
     sio.savemat(filename, dicts)
 
 
-# # pca data for decreasing dimensions, data is bands data after normalization.
-# def pca_data(data, n=3):
-#     x = data.reshape(-1, data.shape[-1])
-#     pca = PCA(n_components=n).fit(x)
-#     x_p = pca.transform(x)
-#     x_p = x_p.reshape(data.shape[0], data.shape[1], n)
-#     return x_p
-
-
-# According to label_pixel's geo and index to obtain training samples accordingly.
-# m is block size which for CNN input.
-# # increase various data format inputs, images data: .tif and .mat, labels data: .shp and .mat
-# when m == 1,Function return training_samples is shape of (numbers samples, bands) array,
-# training_labels return is shape of (numbers samples,) array.
-# when m == block_size, Function returns training_samples is array of shape is (numbers samples,m,m,bands)
-# training_labels is same above!
+# Prepare data for raster data, train_index, and train_labels
 def get_prep_data(data_path, train_data_path, norma_method="z-score"):
     if data_path.endswith('.dat'):
         rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(data_path)
@@ -190,10 +89,7 @@ def get_prep_data(data_path, train_data_path, norma_method="z-score"):
             training_labels = band_data[is_train]
     else:
         bands_data, is_train, training_labels = get_mat_info(data_path, train_data_path)
-
     bands_data = norma_data(bands_data, norma_methods=norma_method)
-    # if pca is True:
-    #     bands_data = pca_data(bands_data, n=n)
     return bands_data, is_train, training_labels
 
 
@@ -206,6 +102,7 @@ def get_shuffle(a, b):
     return a, b
 
 
+# custom train index and text index from one shapefiles.
 def custom_train_index(seed, is_train, training_labels, c, lists):
     np.random.seed(seed)
     index = np.array(is_train).transpose((1, 0))
@@ -230,11 +127,11 @@ def custom_train_index(seed, is_train, training_labels, c, lists):
 
     x_train_index, y_train = get_shuffle(x_train_index, y_train)
     x_test_index, y_test = get_shuffle(x_test_index, y_test)
-    # x_train_index, _, y_train, _ = train_test_split(x_train_index, y_train, test_size=0, shuffle=True)
-    # x_test_index, _, y_test, _ = train_test_split(x_test_index, y_test, test_size=0, shuffle=True)
     return x_train_index, x_test_index, y_train, y_test
 
 
+# Prepare train raster data and train labels for training model.
+# return train_samples and train_labels
 def get_train_sample(data_path, train_data_path, c, norma_methods='z-score', m=1):
     bands_data, is_train, training_labels = get_prep_data(data_path, train_data_path,
                                                           norma_method=norma_methods)
@@ -268,6 +165,8 @@ def get_train_sample(data_path, train_data_path, c, norma_methods='z-score', m=1
     return train_samples, train_labels
 
 
+# According to given test shape or test index to obtain OA and Kappa from the model
+# only for model MLP and CNN
 def get_test_predict(model, data_path, test_data_path, bsize, norma_methods='z-score', m=1):
     bands_data, is_test, test_labels = get_prep_data(data_path, test_data_path,
                                                      norma_method=norma_methods)
@@ -308,6 +207,36 @@ def get_test_predict(model, data_path, test_data_path, bsize, norma_methods='z-s
     return oa, kappa
 
 
+# Using CNN model to predict each segments and obtain accordingly predict value and probabilities.
+# Return segments shapefiles and add two field value, predicts and prob.
+# In order to save into shape file,segment.to_file(file_path)
+def get_predicts_segments(segments_path, image_mat_path, norma_methods, m, model):
+    segments = gpd.read_file(segments_path)
+    x = segments.centroid.x
+    y = segments.centroid.y
+    segments['R'] = [int(a) for a in (2957730.452 - y)]
+    segments["C"] = [int(b) for b in (x - 541546.573)]
+    bands_data = get_mat(mat_data_path=image_mat_path)
+    bands_data = norma_data(bands_data, norma_methods)
+    n = int((m - 1) / 2)
+    samples = []
+    for x, y in tqdm(zip(segments['R'], segments['C'])):
+        k1 = x - n
+        k2 = x + n + 1
+        k3 = y - n
+        k4 = y + n + 1
+        block = bands_data[k1:k2, k3:k4]
+        samples.append(block)
+    print("Starting Predicts Segments...")
+    pre = model.predict(np.stack(samples))
+    print("Predicting Finish!!!")
+    predicts = np.argmax(pre, axis=-1) + 1
+    prob = np.max(pre, axis=1)
+    segments['predicts'] = predicts
+    segments['prob'] = prob
+    print("Save Results into Shapefiles Success!!")
+    return segments
+
 # def write_out_whole_predicts(model, data_path, bsize, norma_methods='z-score', m=1):
 #     # bands_data_dict = sio.loadmat(data_path)
 #     # bands_data = bands_data_dict[list(bands_data_dict.keys())[-1]]
@@ -347,12 +276,11 @@ def get_test_predict(model, data_path, test_data_path, bsize, norma_methods='z-s
 #     # write_classification_result2(predicts, shape)
 #     # write_classification_prob(predicts, shape)
 
+
 def write_region_predicts(model, data_path, train_data_path,
                           bsize, norma_methods='z-score', m=1):
     bands_data, is_train, _ = get_mat_info(data_path, train_data_path)
     bands_data = norma_data(bands_data, norma_methods)
-    # if pca is True:
-    #     bands_data = pca_data(bands_data, n=n)
     index = np.array(is_train).transpose((1, 0))
     samples = []
     if m == 1:
@@ -366,8 +294,6 @@ def write_region_predicts(model, data_path, train_data_path,
     else:
         predicts = []
         n = int((m - 1) / 2)
-        # index = index + n
-        # bands_data = np.pad(bands_data, ((n, n), (n, n), (0, 0)), 'constant', constant_values=0)
         for i, j in enumerate(index):
             k1 = j[0] - n
             k2 = j[0] + n + 1
@@ -703,3 +629,59 @@ def plot_history(network):
 #     ne_d = pd.concat(l, axis=1)
 #     ne_d[column[1:]] = ne_d[column[1:]].apply(pd.to_numeric)
 #     ne_d.to_excel(xls_path, index=False)
+def split_vector(vector_path, save_path):
+    samples = gpd.read_file(vector_path)
+    classes = np.unique(samples['CLASS_ID'])
+    for i in classes:
+        single = samples[samples['CLASS_ID'] == i]
+        single.to_file(save_path + r'{}.shp'.format(i))
+    print("Split Finish" + " Check in " + save_path)
+
+
+def split_segments_predicts(segments, save_path):
+    classes = np.unique(segments['predicts'])
+    for i in classes:
+        single = segments[segments['predicts'] == i]
+        single.to_file(save_path + '{}.shp'.format(i))
+    print('Split Finish ' + " Check in " + save_path)
+
+# def create_mask_from_vector(vector_data_path, cols, rows, geo_transform,
+#                             projection, target_value=1):
+#     data_source = gdal.OpenEx(vector_data_path, gdal.OF_VECTOR)
+#     layer = data_source.GetLayer(0)
+#     driver = gdal.GetDriverByName('MEM')
+#     target_ds = driver.Create('', cols, rows, 1, gdal.GDT_UInt16)
+#     target_ds.SetGeoTransform(geo_transform)
+#     target_ds.SetProjection(projection)
+#     gdal.RasterizeLayer(target_ds, [1], layer, burn_values=[target_value])
+#     return target_ds
+#
+#
+# def vectors_to_raster(vector_path, rows, cols, geo_transform, projection):
+#     """Rasterize the vectors in given directory in a single image."""
+#     files = [f for f in os.listdir(vector_path) if f.endswith('.shp')]
+#     classes = [f.split('.')[0] for f in files]
+#     shapefiles = [os.path.join(vector_path, f) for f in files]
+#     labeled_pixels = np.zeros((rows, cols))
+#     for i, path in zip(classes, shapefiles):
+#         label = int(i)
+#         ds = create_mask_from_vector(path, cols, rows, geo_transform,
+#                                      projection, target_value=label)
+#         band = ds.GetRasterBand(1)
+#         labeled_pixels += band.ReadAsArray()
+#     is_train = np.nonzero(labeled_pixels)
+#     return labeled_pixels, is_train
+
+
+# def vectors_to_raster1(vector_path, rows, cols, geo_transform, projection):
+#     labeled_pixels = np.zeros((rows, cols))
+#     ds = create_mask_from_vector(vector_path, cols, rows, geo_transform,
+#                                  projection, target_value=1)
+#     band = ds.GetRasterBand(1)
+#     labeled_pixels += band.ReadAsArray()
+#     return labeled_pixels
+
+
+# # due to hyperspectral images datasets on web is .mat format, using scipy.sio read .mat data
+# # return is dict and bands data and labels ndarray is last key value.
+# # get is_train from labels ndarry and generate training labels and bands data and is_train.
