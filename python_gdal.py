@@ -102,7 +102,7 @@ def get_shuffle(a, b):
     return a, b
 
 
-# custom train index and text index from one shapefiles.
+# Custom train index and text index from one shapefiles.
 def custom_train_index(seed, is_train, training_labels, c, lists):
     np.random.seed(seed)
     index = np.array(is_train).transpose((1, 0))
@@ -131,7 +131,7 @@ def custom_train_index(seed, is_train, training_labels, c, lists):
 
 
 # Prepare train raster data and train labels for training model.
-# return train_samples and train_labels
+# Return train_samples and train_labels
 def get_train_sample(data_path, train_data_path, c, norma_methods='z-score', m=1):
     bands_data, is_train, training_labels = get_prep_data(data_path, train_data_path,
                                                           norma_method=norma_methods)
@@ -166,7 +166,7 @@ def get_train_sample(data_path, train_data_path, c, norma_methods='z-score', m=1
 
 
 # According to given test shape or test index to obtain OA and Kappa from the model
-# only for model MLP and CNN
+# Only for model MLP and CNN
 def get_test_predict(model, data_path, test_data_path, bsize, norma_methods='z-score', m=1):
     bands_data, is_test, test_labels = get_prep_data(data_path, test_data_path,
                                                      norma_method=norma_methods)
@@ -207,76 +207,8 @@ def get_test_predict(model, data_path, test_data_path, bsize, norma_methods='z-s
     return oa, kappa
 
 
-# Using CNN model to predict each segments and obtain accordingly predict value and probabilities.
-# Return segments shapefiles and add two field value, predicts and prob.
-# In order to save into shape file,segment.to_file(file_path)
-def get_predicts_segments(segments_path, image_mat_path, norma_methods, m, model):
-    segments = gpd.read_file(segments_path)
-    x = segments.centroid.x
-    y = segments.centroid.y
-    segments['R'] = [int(a) for a in (2957730.452 - y)]
-    segments["C"] = [int(b) for b in (x - 541546.573)]
-    bands_data = get_mat(mat_data_path=image_mat_path)
-    bands_data = norma_data(bands_data, norma_methods)
-    n = int((m - 1) / 2)
-    samples = []
-    for x, y in tqdm(zip(segments['R'], segments['C'])):
-        k1 = x - n
-        k2 = x + n + 1
-        k3 = y - n
-        k4 = y + n + 1
-        block = bands_data[k1:k2, k3:k4]
-        samples.append(block)
-    print("Starting Predicts Segments...")
-    pre = model.predict(np.stack(samples))
-    print("Predicting Finish!!!")
-    predicts = np.argmax(pre, axis=-1) + 1
-    prob = np.max(pre, axis=1)
-    segments['predicts'] = predicts
-    segments['prob'] = prob
-    print("Save Results into Shapefiles Success!!")
-    return segments
-
-# def write_out_whole_predicts(model, data_path, bsize, norma_methods='z-score', m=1):
-#     # bands_data_dict = sio.loadmat(data_path)
-#     # bands_data = bands_data_dict[list(bands_data_dict.keys())[-1]]
-#     rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(
-#         raster_data_path=data_path)
-#     bands_data = norma_data(bands_data, norma_methods=norma_methods)
-#     # if pca is True:
-#     #     bands_data = pca_data(bands_data, n=n)
-#     if m == 1:
-#         if len(model.input.shape) == 2:
-#             pre = bands_data.reshape((bands_data.shape[0]*bands_data.shape[1], bands_data.shape[2]))
-#         else:
-#             pre = bands_data.reshape((bands_data.shape[0]*bands_data.shape[1], bands_data.shape[2], -1))
-#         predicts = model.predict(pre)
-#     else:
-#         n = int((m - 1) / 2)
-#         bands_data = np.pad(bands_data, ((n, n), (n, n), (0, 0)), 'constant', constant_values=0)
-#         cols = bands_data.shape[1]-2*n
-#         rows = bands_data.shape[0]-2*n
-#         result = []
-#         predicts = []
-#         for i in range(0, rows, 1):
-#             for j in range(0, cols, 1):
-#                 data = bands_data[i: i + m, j: j + m, :]
-#                 result.append(data)
-#                 if len(result) == bsize or i == int(rows-1):
-#                     print("Batches Predictions...")
-#                     pre = np.stack(result)
-#                     if len(model.input.shape) == 5:
-#                         pre = pre.reshape((pre.shape[0], pre.shape[1], pre.shape[2], pre.shape[3], -1))
-#                     predict = model.predict(pre)
-#                     predicts.append(predict)
-#                     result = []
-#         predicts = np.concatenate(predicts)
-#         print("Batches Predictions Finish!!!")
-#     return predicts
-#     # write_classification_result2(predicts, shape)
-#     # write_classification_prob(predicts, shape)
-
-
+# Write out whole research region predicts
+# Return array, whose shape is (R, C, N_CLASS)
 def write_region_predicts(model, data_path, train_data_path,
                           bsize, norma_methods='z-score', m=1):
     bands_data, is_train, _ = get_mat_info(data_path, train_data_path)
@@ -311,137 +243,12 @@ def write_region_predicts(model, data_path, train_data_path,
                 samples = []
         predicts = np.concatenate(predicts)
         print("Batches Predictions Finish!!!")
-
     return predicts
 
 
-# def get_fusion_features_from_test(model1, model2, data_path, train_data_path, c, lists, m):
-#     extractor_from_model1, extractor_from_model2 = feature_extractor(model1, model2)
-#     bands_data, is_train, train_labels = get_prep_data(data_path, train_data_path)
-#     _, test_index, _, y_test = custom_train_index(is_train, train_labels, c, lists)
-#     features1 = []
-#     for i in test_index:
-#         feature = bands_data[i[0], i[1]]
-#         features1.append(feature)
-#     features1 = np.stack(features1)
-#     features1 = features1.reshape((features1.shape[0], features1.shape[1], -1))
-#     features1 = extractor_from_model1([features1])[0]
-#     features2 = []
-#     samples = []
-#     n = int((m - 1) / 2)
-#     x_test_nindex = test_index + n
-#     bands_data = np.pad(bands_data, ((n, n), (n, n), (0, 0)), 'constant', constant_values=0)
-#     for i, j in enumerate(x_test_nindex):
-#         k1 = j[0] - n
-#         k2 = j[0] + n + 1
-#         k3 = j[1] - n
-#         k4 = j[1] + n + 1
-#         block = bands_data[k1:k2, k3:k4]
-#         samples.append(block)
-#         if len(samples) == 3200 or i == x_test_nindex.shape[0] - 1:
-#             print("Batches Features...")
-#             pre = np.stack(samples)
-#             feature = extractor_from_model2([pre])[0]
-#             features2.append(feature)
-#             samples = []
-#     features2 = np.concatenate(features2)
-#     fusion_features = np.concatenate([features1, features2], axis=1)
-#     return fusion_features, y_test
-
-
-# def get_fusion_features_from_whole(model1, model2, data_path, m):
-#     extractor_from_model1, extractor_from_model2 = feature_extractor(model1, model2)
-#     bands_data_dict = sio.loadmat(data_path)
-#     bands_data_1 = bands_data_dict[list(bands_data_dict.keys())[-1]]
-#     bands_data_1 = norma_data(bands_data_1)
-#     features1 = bands_data_1.reshape((bands_data_1.shape[0] * bands_data_1.shape[1], bands_data_1.shape[2], -1))
-#     f1 = extractor_from_model1([features1])[0]
-#
-#     n = int((m - 1) / 2)
-#     bands_data_1 = np.pad(bands_data_1, ((n, n), (n, n), (0, 0)), 'constant', constant_values=0)
-#     cols = bands_data_1.shape[1] - 2 * n
-#     rows = bands_data_1.shape[0] - 2 * n
-#     result1 = []
-#     f2 = []
-#     for g in range(0, rows, 1):
-#         for h in range(0, cols, 1):
-#             data = bands_data_1[g: g + m, h: h + m, :]
-#             result1.append(data)
-#             if len(result1) == 1600 or g == int(rows - 1):
-#                 print("Batches Features...")
-#                 pre1 = np.stack(result1)
-#                 fe = extractor_from_model2([pre1])[0]
-#                 f2.append(fe)
-#                 result1 = []
-#     f2 = np.concatenate(f2)
-#
-#     f3 = np.concatenate([f1, f2], axis=1)
-#     return f3
-
-
-# def write_classification_result_tif(fname, classification, original_raster_data_path, m=1):
-#     """Create a GeoTIFF file with the given data."""
-#     rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(raster_data_path=original_raster_data_path)
-#     driver = gdal.GetDriverByName('GTiff')
-#     classification = classification.reshape((rows, cols))
-#     dataset = driver.Create(fname, cols, rows, 1, gdal.GDT_Byte)
-#     dataset.SetGeoTransform(geo_transform)
-#     dataset.SetProjection(proj)
-#     band = dataset.GetRasterBand(1)
-#     band.WriteArray(classification)
-#     dataset = None  # close the file
-
-
-# # write out whole image to RGB
-# # predict value form model, original image shape
-# def write_whole_image_classification_result(predict, shape):
-#     if predict.ndim == 2:
-#         predict = np.argmax(predict, axis=-1) + 1
-#     arr_2d = np.reshape(predict, shape)
-#     plot_predicts(arr_2d)
-
-
-# def write_whole_image_predicts_prob(predict, shape):
-#     max_prob = np.max(predict, axis=1)
-#     mean_prob = np.mean(predict, axis=1)
-#     sec_max = []
-#     for p in predict:
-#         p = sorted(p)
-#         second = p[-2]
-#         sec_max.append(second)
-#     conf1 = max_prob - sec_max
-#     conf2 = max_prob - mean_prob
-#     low_confidence0 = [x for x in max_prob if x < 0.5]
-#     low_confidence1 = [x for x in conf1 if x < 0.5]
-#     low_confidence2 = [x for x in conf2 if x < 0.5]
-#     cof1 = len(low_confidence0)/(shape[0]*shape[1])
-#     cof2 = len(low_confidence1)/(shape[0]*shape[1])
-#     cof3 = len(low_confidence2)/(shape[0]*shape[1])
-#     # print("cof1:{}, cof2:{}, cof3: {}".format(cof1, cof2, cof3))
-#     # prob_img = np.reshape(conf, shape)
-#     # fig = plt.figure()
-#     # fig.add_subplot(121)
-#     # plt.xlabel("Confidences")
-#     # plt.ylabel("Numbers")
-#     # plt.hist(conf, bins=10, range=(0, 1), facecolor='red', alpha=0.5)
-#     #
-#     # fig.add_subplot(122)
-#     # sn.heatmap(prob_img, annot=False, cmap="Greys_r", xticklabels=False, yticklabels=False)
-#     # plt.imshow(prob_img, cmap='gray')
-#     #
-#     # plt.show()
-#     return cof1, cof2, cof3
-def plot_predicts(arr_2d):
-    arr_3d = np.zeros((arr_2d.shape[0], arr_2d.shape[1], 3), dtype=np.uint8)
-    for c, i in palette.items():
-        m = arr_2d == c
-        arr_3d[m] = i
-    plt.imshow(arr_3d)
-    # plt.show()
-
-
-# # write out labeled data given to RGB
-# # parameter: predict value from model, train_mat_data_path for is_train, original images shape
+# Write out predicts which is a array to mat file.
+# mat_file is an array whose shape is (R, C, 2), one is predicts, other one is max prob.
+# plot predicts and prob
 def write_region_image_classification_result_probs(predict, train_data_path, shape, filename):
     labeled_pixel_dict = sio.loadmat(train_data_path)
     labeled_pixel = labeled_pixel_dict[list(labeled_pixel_dict.keys())[-1]]
@@ -474,6 +281,57 @@ def plot_region_image_classification_result_prob(predict_mat_path):
     plt.subplot(122)
     plt.imshow(result[:, :, 1], cmap='Spectral')
     plt.show()
+
+
+# Using CNN model to predict each segments and obtain accordingly predict value and probabilities.
+# Return segments shapefiles and add two field value, predicts and prob.
+# In order to save into shape file,segment.to_file(file_path)
+def get_predicts_segments(segments_path, image_mat_path, norma_methods, m, model):
+    segments = gpd.read_file(segments_path)
+    x = segments.centroid.x
+    y = segments.centroid.y
+    segments['R'] = [int(a) for a in (2957730.452 - y)]
+    segments["C"] = [int(b) for b in (x - 541546.573)]
+    bands_data = get_mat(mat_data_path=image_mat_path)
+    bands_data = norma_data(bands_data, norma_methods)
+    n = int((m - 1) / 2)
+    samples = []
+    for x, y in tqdm(zip(segments['R'], segments['C'])):
+        k1 = x - n
+        k2 = x + n + 1
+        k3 = y - n
+        k4 = y + n + 1
+        block = bands_data[k1:k2, k3:k4]
+        samples.append(block)
+    print("Starting Predicts Segments...")
+    pre = model.predict(np.stack(samples))
+    print("Predicting Finish!!!")
+    predicts = np.argmax(pre, axis=-1) + 1
+    prob = np.max(pre, axis=1)
+    segments['predicts'] = predicts
+    segments['prob'] = prob
+    print("Save Results into Shapefiles Success!!")
+    return segments
+
+
+# Get test accuracy from the segment predict
+# predicts is raster, after get segment, output as shapefiles, and vector_to_raster.
+def get_test_segments(data_path, test_data_path, predicts, norma_methods="z-score"):
+    bands_data, is_test, test_labels = get_prep_data(data_path, test_data_path,
+                                                     norma_method=norma_methods)
+    predicts_label = predicts[is_test]
+    oa, kappa = print_plot_cm(test_labels, predicts_label)
+    return oa, kappa
+
+
+# Some additional functions.
+def plot_predicts(arr_2d):
+    arr_3d = np.zeros((arr_2d.shape[0], arr_2d.shape[1], 3), dtype=np.uint8)
+    for c, i in palette.items():
+        m = arr_2d == c
+        arr_3d[m] = i
+    plt.imshow(arr_3d)
+    # plt.show()
 
 
 def print_plot_cm(y_true, y_pred):
@@ -680,8 +538,160 @@ def split_segments_predicts(segments, save_path):
 #     band = ds.GetRasterBand(1)
 #     labeled_pixels += band.ReadAsArray()
 #     return labeled_pixels
-
-
 # # due to hyperspectral images datasets on web is .mat format, using scipy.sio read .mat data
 # # return is dict and bands data and labels ndarray is last key value.
 # # get is_train from labels ndarry and generate training labels and bands data and is_train.
+# def write_out_whole_predicts(model, data_path, bsize, norma_methods='z-score', m=1):
+#     # bands_data_dict = sio.loadmat(data_path)
+#     # bands_data = bands_data_dict[list(bands_data_dict.keys())[-1]]
+#     rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(
+#         raster_data_path=data_path)
+#     bands_data = norma_data(bands_data, norma_methods=norma_methods)
+#     # if pca is True:
+#     #     bands_data = pca_data(bands_data, n=n)
+#     if m == 1:
+#         if len(model.input.shape) == 2:
+#             pre = bands_data.reshape((bands_data.shape[0]*bands_data.shape[1], bands_data.shape[2]))
+#         else:
+#             pre = bands_data.reshape((bands_data.shape[0]*bands_data.shape[1], bands_data.shape[2], -1))
+#         predicts = model.predict(pre)
+#     else:
+#         n = int((m - 1) / 2)
+#         bands_data = np.pad(bands_data, ((n, n), (n, n), (0, 0)), 'constant', constant_values=0)
+#         cols = bands_data.shape[1]-2*n
+#         rows = bands_data.shape[0]-2*n
+#         result = []
+#         predicts = []
+#         for i in range(0, rows, 1):
+#             for j in range(0, cols, 1):
+#                 data = bands_data[i: i + m, j: j + m, :]
+#                 result.append(data)
+#                 if len(result) == bsize or i == int(rows-1):
+#                     print("Batches Predictions...")
+#                     pre = np.stack(result)
+#                     if len(model.input.shape) == 5:
+#                         pre = pre.reshape((pre.shape[0], pre.shape[1], pre.shape[2], pre.shape[3], -1))
+#                     predict = model.predict(pre)
+#                     predicts.append(predict)
+#                     result = []
+#         predicts = np.concatenate(predicts)
+#         print("Batches Predictions Finish!!!")
+#     return predicts
+#     # write_classification_result2(predicts, shape)
+#     # write_classification_prob(predicts, shape)
+# def get_fusion_features_from_test(model1, model2, data_path, train_data_path, c, lists, m):
+#     extractor_from_model1, extractor_from_model2 = feature_extractor(model1, model2)
+#     bands_data, is_train, train_labels = get_prep_data(data_path, train_data_path)
+#     _, test_index, _, y_test = custom_train_index(is_train, train_labels, c, lists)
+#     features1 = []
+#     for i in test_index:
+#         feature = bands_data[i[0], i[1]]
+#         features1.append(feature)
+#     features1 = np.stack(features1)
+#     features1 = features1.reshape((features1.shape[0], features1.shape[1], -1))
+#     features1 = extractor_from_model1([features1])[0]
+#     features2 = []
+#     samples = []
+#     n = int((m - 1) / 2)
+#     x_test_nindex = test_index + n
+#     bands_data = np.pad(bands_data, ((n, n), (n, n), (0, 0)), 'constant', constant_values=0)
+#     for i, j in enumerate(x_test_nindex):
+#         k1 = j[0] - n
+#         k2 = j[0] + n + 1
+#         k3 = j[1] - n
+#         k4 = j[1] + n + 1
+#         block = bands_data[k1:k2, k3:k4]
+#         samples.append(block)
+#         if len(samples) == 3200 or i == x_test_nindex.shape[0] - 1:
+#             print("Batches Features...")
+#             pre = np.stack(samples)
+#             feature = extractor_from_model2([pre])[0]
+#             features2.append(feature)
+#             samples = []
+#     features2 = np.concatenate(features2)
+#     fusion_features = np.concatenate([features1, features2], axis=1)
+#     return fusion_features, y_test
+
+
+# def get_fusion_features_from_whole(model1, model2, data_path, m):
+#     extractor_from_model1, extractor_from_model2 = feature_extractor(model1, model2)
+#     bands_data_dict = sio.loadmat(data_path)
+#     bands_data_1 = bands_data_dict[list(bands_data_dict.keys())[-1]]
+#     bands_data_1 = norma_data(bands_data_1)
+#     features1 = bands_data_1.reshape((bands_data_1.shape[0] * bands_data_1.shape[1], bands_data_1.shape[2], -1))
+#     f1 = extractor_from_model1([features1])[0]
+#
+#     n = int((m - 1) / 2)
+#     bands_data_1 = np.pad(bands_data_1, ((n, n), (n, n), (0, 0)), 'constant', constant_values=0)
+#     cols = bands_data_1.shape[1] - 2 * n
+#     rows = bands_data_1.shape[0] - 2 * n
+#     result1 = []
+#     f2 = []
+#     for g in range(0, rows, 1):
+#         for h in range(0, cols, 1):
+#             data = bands_data_1[g: g + m, h: h + m, :]
+#             result1.append(data)
+#             if len(result1) == 1600 or g == int(rows - 1):
+#                 print("Batches Features...")
+#                 pre1 = np.stack(result1)
+#                 fe = extractor_from_model2([pre1])[0]
+#                 f2.append(fe)
+#                 result1 = []
+#     f2 = np.concatenate(f2)
+#
+#     f3 = np.concatenate([f1, f2], axis=1)
+#     return f3
+
+
+# def write_classification_result_tif(fname, classification, original_raster_data_path, m=1):
+#     """Create a GeoTIFF file with the given data."""
+#     rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(raster_data_path=original_raster_data_path)
+#     driver = gdal.GetDriverByName('GTiff')
+#     classification = classification.reshape((rows, cols))
+#     dataset = driver.Create(fname, cols, rows, 1, gdal.GDT_Byte)
+#     dataset.SetGeoTransform(geo_transform)
+#     dataset.SetProjection(proj)
+#     band = dataset.GetRasterBand(1)
+#     band.WriteArray(classification)
+#     dataset = None  # close the file
+
+
+# # write out whole image to RGB
+# # predict value form model, original image shape
+# def write_whole_image_classification_result(predict, shape):
+#     if predict.ndim == 2:
+#         predict = np.argmax(predict, axis=-1) + 1
+#     arr_2d = np.reshape(predict, shape)
+#     plot_predicts(arr_2d)
+
+
+# def write_whole_image_predicts_prob(predict, shape):
+#     max_prob = np.max(predict, axis=1)
+#     mean_prob = np.mean(predict, axis=1)
+#     sec_max = []
+#     for p in predict:
+#         p = sorted(p)
+#         second = p[-2]
+#         sec_max.append(second)
+#     conf1 = max_prob - sec_max
+#     conf2 = max_prob - mean_prob
+#     low_confidence0 = [x for x in max_prob if x < 0.5]
+#     low_confidence1 = [x for x in conf1 if x < 0.5]
+#     low_confidence2 = [x for x in conf2 if x < 0.5]
+#     cof1 = len(low_confidence0)/(shape[0]*shape[1])
+#     cof2 = len(low_confidence1)/(shape[0]*shape[1])
+#     cof3 = len(low_confidence2)/(shape[0]*shape[1])
+#     # print("cof1:{}, cof2:{}, cof3: {}".format(cof1, cof2, cof3))
+#     # prob_img = np.reshape(conf, shape)
+#     # fig = plt.figure()
+#     # fig.add_subplot(121)
+#     # plt.xlabel("Confidences")
+#     # plt.ylabel("Numbers")
+#     # plt.hist(conf, bins=10, range=(0, 1), facecolor='red', alpha=0.5)
+#     #
+#     # fig.add_subplot(122)
+#     # sn.heatmap(prob_img, annot=False, cmap="Greys_r", xticklabels=False, yticklabels=False)
+#     # plt.imshow(prob_img, cmap='gray')
+#     #
+#     # plt.show()
+#     return cof1, cof2, cof3
