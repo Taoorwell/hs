@@ -16,6 +16,7 @@ import scipy.io as sio
 from osgeo import gdal
 import geopandas as gpd
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 from sklearn.metrics import confusion_matrix, classification_report, cohen_kappa_score, accuracy_score
 # from sklearn.decomposition import PCA
 # Functions of Gdal
@@ -40,7 +41,7 @@ def get_raster_info(raster_data_path):
 
 # Read shapefiles
 # Read shapefiles of label, And rasterize layer with according label values.used together with below func.
-def vectors_to_raster(vector_data_path, cols, rows, geo_transform, projection, filed="CLASS_ID"):
+def vectors_to_raster(vector_data_path, cols, rows, geo_transform, projection):
     data_source = gdal.OpenEx(vector_data_path, gdal.OF_VECTOR)
     layer = data_source.GetLayer(0)
     driver = gdal.GetDriverByName('MEM')
@@ -48,7 +49,7 @@ def vectors_to_raster(vector_data_path, cols, rows, geo_transform, projection, f
     target_ds.SetGeoTransform(geo_transform)
     target_ds.SetProjection(projection)
 
-    gdal.RasterizeLayer(target_ds, [1], layer, None, None, [0], ['ALL_TOUCHED=FALSE', 'ATTRIBUTE={}'.format(filed)])
+    gdal.RasterizeLayer(target_ds, [1], layer, None, None, [0], ['ALL_TOUCHED=FALSE', 'ATTRIBUTE=CLASS_ID'])
 
     labeled_pixels = target_ds.GetRasterBand(1).ReadAsArray()
     is_train = np.nonzero(labeled_pixels)
@@ -80,7 +81,7 @@ def get_prep_data(data_path, train_data_path, norma_method="z-score"):
     if data_path.endswith('.dat'):
         rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(data_path)
         try:
-            labeled_pixels, is_train = vectors_to_raster(train_data_path, rows, cols, geo_transform, proj)
+            labeled_pixels, is_train = vectors_to_raster(train_data_path, cols, rows, geo_transform, proj)
             training_labels = labeled_pixels[is_train]
         except NotADirectoryError:
             rows, cols, n_bands, band_data, geo_transform, proj = get_raster_info(train_data_path)
@@ -278,8 +279,14 @@ def plot_region_image_classification_result_prob(predict_mat_path):
     result = get_mat(predict_mat_path)
     plt.subplot(121)
     plot_predicts(result[:, :, 0])
+    plt.xlabel("Classification Predict Map")
     plt.subplot(122)
-    plt.imshow(result[:, :, 1], cmap='Spectral')
+    plt.imshow(result[:, :, 1], cmap='Greys')
+    plt.xticks([])
+    plt.yticks([])
+    plt.xlabel("Classification Confidence Map")
+    plt.colorbar()
+    # plt.axis('off')
     plt.show()
 
 
@@ -331,6 +338,17 @@ def plot_predicts(arr_2d):
         m = arr_2d == c
         arr_3d[m] = i
     plt.imshow(arr_3d)
+    plt.xticks([])
+    plt.yticks([])
+    C1 = mpatches.Patch(color='Blue', label='KYL')
+    C2 = mpatches.Patch(color='Orange', label='ZLD')
+    C3 = mpatches.Patch(color='ForestGreen', label='SML')
+    C4 = mpatches.Patch(color='Red', label='MWS')
+    C5 = mpatches.Patch(color='Coral', label='CFJD')
+    C6 = mpatches.Patch(color='DeepSkyBlue', label='SLD')
+    C7 = mpatches.Patch(color='Cyan', label='WCLD')
+    plt.legend(handles=[C1, C2, C3, C4, C5, C6, C7])
+    # plt.axis('off')
     # plt.show()
 
 
@@ -407,12 +425,12 @@ def norma_data(data, norma_methods="z-score"):
 # # palette is color map for rgb convert. preference setting.
 # # including 16 types color, can increase or decrease.
 palette = {0: (255, 255, 255),  # White
-           1: (0, 191, 255),  # DeepSkyBlue
-           2: (34, 139, 34),  # ForestGreen
-           3: (255, 165, 0),  # Orange
-           4: (0, 0, 255),  # Blue
+           6: (0, 191, 255),  # DeepSkyBlue
+           3: (34, 139, 34),  # ForestGreen
+           2: (255, 165, 0),  # Orange
+           1: (0, 0, 255),  # Blue
            5: (255, 127, 80),  # Coral
-           6: (255, 0, 0),  # Red
+           4: (255, 0, 0),  # Red
            7: (0, 255, 255),  # Cyan
            8: (0, 255, 0),  # Lime
            9: (0, 128, 128),
