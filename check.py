@@ -1,4 +1,5 @@
 import tensorflow as tf
+import time
 from python_gdal import *
 
 
@@ -10,8 +11,9 @@ file_path = pwd + r"images/GF2_4314_GS_2.dat"
 vector_path = pwd + r"vector/new_shp"
 vector = pwd + r"vector/test_samples_0411.shp"
 
-segments_path = pwd + r"images/WORKSPACE/GF2_4314_GS_3.shp"
+segments_path = pwd + r"images/WORKSPACE/New Workspace/GF2_4314_GS_800805.shp"
 # centroid_path = r"G:/GF/JL/sg/40_10_05_centroid_new.shp"
+filename = pwd + r"model/sg/GF2_SEGMENTATION_80_45.shp"
 
 mat_images_path = pwd + r'images/mat/GF_2.mat'
 
@@ -19,8 +21,32 @@ mat_labels_path = pwd + r'images/mat/GF_2_LABEL_1.mat'
 mat_labels_path_1 = pwd + r'images/mat/GF_2_LABEL_2.mat'
 mat_region_path = pwd + r'images/mat/GF_2_REGION.mat'
 model_path = pwd + r"model/"
+m = 45
+c = 7
+# segments = gpd.read_file(filename=filename)
+# fig, ax = plt.subplots(1, 1)
+# segments.plot(column='predicts', ax=ax, legend=True)
+# ax.set_xticks([])
+# ax.set_yticks([])
+# plt.show()
+# model = tf.keras.models.load_model(model_path + "CNN_{}.h5".format(m))
+model = tf.keras.models.load_model(model_path + "MLP_1.h5")
+
+model.summary()
+write_region_predicts(model=model, image_data_path=mat_images_path, region_data_path=mat_region_path,
+                      bsize=10000, filename=pwd + r"model/MLP_1_PRE.mat")
+
+#
+# get_predicts_segments(segments_path=segments_path, image_mat_path=mat_images_path, raster_data_path=file_path,
+#                       test_data_path=mat_labels_path_1, norma_methods='z-score', m=m, model=model,
+#                       filename=model_path+"sg/GF2_SEGMENTATION_81_45.shp")
 
 
+# print(get_samples_info(prob[index]))
+# filename = pwd + r"model/CNN_{}".format(m)
+# predicts = get_mat(mat_data_path=pwd + "model/MLP_PRE.mat")
+# print(predicts.shape)
+# get_test_segments(data_path=mat_images_path, test_data_path=mat_labels_path_1, predicts=predicts[:, :, 0])
 # train_samples, train_labels = get_train_sample(data_path=mat_images_path, train_data_path=mat_labels_path,
 #                                                c=7, norma_methods="z-score", m=1)
 # print(train_samples.shape, train_labels.shape)
@@ -217,45 +243,79 @@ model_path = pwd + r"model/"
 #                                  bsize=10000, norma_methods='z-score', m=1)
 # write_region_image_classification_result_probs(predicts, train_data_path=mat_region_path, shape=(7500, 5000, 2),
 #                                                filename=pwd + "model/MLP_PRE.mat")
-plot_region_image_classification_result_prob(predict_mat_path=pwd + "model/MLP_PRE.mat")
-# oa, kappa = get_test_predict(model1, data_path=mat_images_path, test_data_path=mat_labels_path_1, bsize=10000,
-#                              norma_methods="z-score")
+# plot_region_image_classification_result_prob(predict_mat_path=pwd + "model/MLP_PRE.mat")
+# oa, kappa = get_test_predict(model, data_path=mat_images_path, test_data_path=mat_labels_path_1, bsize=10000,
+                             # norma_methods="z-score")
 
 # train_samples, train_labels = get_train_sample(data_path=mat_images_path, train_data_path=mat_labels_path,
-#                                                 c=8, lists=lists, d=4, norma_methods='min-max', m=49)
-# #
-# train_labels = one_hot_encode(c=8, labels=train_labels)
+#                                                c=c, norma_methods='z-score', m=m)
+#
 # print(train_samples.shape, train_labels.shape)
-# # #
-# model2 = tf.keras.models.Sequential([tf.keras.layers.Conv2D(12, (3, 3), padding='same', input_shape=(m, m, 4)),
+#
+# model2 = tf.keras.models.Sequential([tf.keras.layers.Conv2D(8, (5, 5), padding='valid', input_shape=(m, m, 4)),
 #                                      tf.keras.layers.BatchNormalization(),
 #                                      tf.keras.layers.Activation(activation='relu'),
 #                                      tf.keras.layers.MaxPool2D(2, padding='same'),
-#                                      tf.keras.layers.Conv2D(24, (3, 3), padding='same'),
+#                                      tf.keras.layers.Conv2D(12, (3, 3), padding='valid'),
 #                                      tf.keras.layers.BatchNormalization(),
 #                                      tf.keras.layers.Activation(activation='relu'),
 #                                      tf.keras.layers.MaxPool2D(2, padding='same'),
-#                                      tf.keras.layers.Conv2D(48, (3, 3), padding='same'),
+#                                      tf.keras.layers.Conv2D(12, (3, 3), padding='valid'),
+#                                      tf.keras.layers.BatchNormalization(),
+#                                      tf.keras.layers.Activation(activation='relu'),
+#                                      tf.keras.layers.MaxPool2D(2, padding='same'),
+#                                      tf.keras.layers.Conv2D(12, (3, 3), padding='valid'),
 #                                      tf.keras.layers.BatchNormalization(),
 #                                      tf.keras.layers.Activation(activation='relu'),
 #                                      tf.keras.layers.MaxPool2D(2, padding='same'),
 #                                      tf.keras.layers.Flatten(),
-#                                      tf.keras.layers.Dense(32, activation='relu'),
+#                                      tf.keras.layers.Dense(24, activation='relu'),
 #                                      tf.keras.layers.Dropout(0.1),
-#                                      tf.keras.layers.Dense(7, activation='softmax')])
+#                                      tf.keras.layers.Dense(c, activation='softmax')])
 # model2.compile(optimizer=tf.keras.optimizers.Adam(lr=0.01), loss='categorical_crossentropy', metrics=['accuracy'])
-# # model2.summary()
-# # #
+# model2.summary()
+# # # #
 # model2.fit(train_samples, train_labels, batch_size=30, epochs=100)
-# model2 = tf.keras.models.load_model(r"D:/JL/model/CNN_33.h5")
+# bands_data, is_train, training_labels = get_prep_data(data_path=file_path, train_data_path=vector)
+# print(bands_data.shape, len(training_labels))
+# print(get_samples_info(training_labels))
+# model2 = tf.keras.models.load_model(pwd + r"model/CNN_{}.h5".format(m))
+# model2.summary()
+# t1 = time.clock()
+# segments = get_predicts_segments(segments_path=segments_path, image_mat_path=mat_images_path,
+#                                  norma_methods="z-score", m=m, model=model2)
+# t2 = time.clock()
+# print("Predict time: {}".format(t2-t1))
+# segments.to_file(filename=pwd + r"model/sg/GF2_SEGMENTATION.shp")
+
+
+# predicts, is_train = vectors_to_raster(vector_data_path=pwd + r"model/sg/GF2_SEGMENTATION.shp",
+#                                        raster_data_path=file_path,
+#                                        field='predicts')
+# print(predicts.shape)
+# plot_predicts(predicts)
+# plt.show()
+# oa, kappa = get_test_segments(data_path=mat_images_path, test_data_path=mat_labels_path_1, predicts=predicts)
+
+
+# print(t1)
+# predicts = write_region_predicts(model2, data_path=mat_images_path, train_data_path=mat_region_path, bsize=50000,
+#                                  norma_methods="z-score", m=m)
+# t2 = time.clock()
+# print(t2)
+# print("Predict time: {}".format(t2-t1))
+# write_region_image_classification_result_probs(predicts, train_data_path=mat_region_path, shape=(7500, 5000, 2),
+#                                                filename=filename)
 #
+# plot_region_image_classification_result_prob(predict_mat_path=filename)
+
 # oa, kappa = get_test_predict(model=model2,
 #                              data_path=mat_images_path,
-#                              test_data_path=mat_labels_path,
-#                              bsize=10000, norma_methods='min-max', m=m)
-# #
-# # # SAVE MODEL!!!!!!!!!!!!!!!
-# model2.save(r"D:/JL/model/CNN_33.h5")
+#                              test_data_path=mat_labels_path_1,
+#                              bsize=10000, norma_methods='z-score', m=m)
+#
+# # SAVE MODEL!!!!!!!!!!!!!!!
+# model2.save(r"D:/JL/model/CNN_{}.h5".format(m))
 # print("Model Saved!!!")
 ################################################################################
 # MLP

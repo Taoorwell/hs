@@ -28,7 +28,7 @@ from sklearn.metrics import confusion_matrix, classification_report, cohen_kappa
 def get_raster_info(raster_data_path):
     raster_dataset = gdal.Open(raster_data_path, gdal.GA_ReadOnly)
     geo_transform = raster_dataset.GetGeoTransform()
-    proj = raster_dataset.GetProjectionRef()
+    projection = raster_dataset.GetProjectionRef()
     bands_data = []
     for b in range(1, raster_dataset.RasterCount + 1):
         band = raster_dataset.GetRasterBand(b)
@@ -36,12 +36,13 @@ def get_raster_info(raster_data_path):
     bands_data = np.dstack(bands_data)
     bands_data = bands_data[:, :, :]
     rows, cols, n_bands = bands_data.shape
-    return rows, cols, n_bands, bands_data, geo_transform, proj
+    return rows, cols, n_bands, bands_data, geo_transform, projection
 
 
 # Read shapefiles
 # Read shapefiles of label, And rasterize layer with according label values.used together with below func.
-def vectors_to_raster(vector_data_path, cols, rows, geo_transform, projection):
+def vectors_to_raster(vector_data_path, raster_data_path, field="CLASS_ID"):
+    rows, cols, n_bands, bands_data, geo_transform, projection = get_raster_info(raster_data_path)
     data_source = gdal.OpenEx(vector_data_path, gdal.OF_VECTOR)
     layer = data_source.GetLayer(0)
     driver = gdal.GetDriverByName('MEM')
@@ -49,7 +50,7 @@ def vectors_to_raster(vector_data_path, cols, rows, geo_transform, projection):
     target_ds.SetGeoTransform(geo_transform)
     target_ds.SetProjection(projection)
 
-    gdal.RasterizeLayer(target_ds, [1], layer, None, None, [0], ['ALL_TOUCHED=FALSE', 'ATTRIBUTE=CLASS_ID'])
+    gdal.RasterizeLayer(target_ds, [1], layer, None, None, [0], ['ALL_TOUCHED=FALSE', 'ATTRIBUTE={}'.format(field)])
 
     labeled_pixels = target_ds.GetRasterBand(1).ReadAsArray()
     is_train = np.nonzero(labeled_pixels)
@@ -81,7 +82,7 @@ def get_prep_data(data_path, train_data_path, norma_method="z-score"):
     if data_path.endswith('.dat'):
         rows, cols, n_bands, bands_data, geo_transform, proj = get_raster_info(data_path)
         try:
-            labeled_pixels, is_train = vectors_to_raster(train_data_path, cols, rows, geo_transform, proj)
+            labeled_pixels, is_train = vectors_to_raster(train_data_path, data_path)
             training_labels = labeled_pixels[is_train]
         except NotADirectoryError:
             rows, cols, n_bands, band_data, geo_transform, proj = get_raster_info(train_data_path)
@@ -210,9 +211,10 @@ def get_test_predict(model, data_path, test_data_path, bsize, norma_methods='z-s
 
 # Write out whole research region predicts
 # Return array, whose shape is (R, C, N_CLASS)
-def write_region_predicts(model, data_path, train_data_path,
-                          bsize, norma_methods='z-score', m=1):
-    bands_data, is_train, _ = get_mat_info(data_path, train_data_path)
+def write_region_predicts(model, image_data_path, region_data_path,
+                          bsize, filename, norma_methods='z-score', m=1):
+    print("Step1: Start Predicting Whole Region...")
+    bands_data, is_train, _ = get_mat_info(image_data_path, region_data_path)
     bands_data = norma_data(bands_data, norma_methods)
     index = np.array(is_train).transpose((1, 0))
     samples = []
@@ -243,8 +245,24 @@ def write_region_predicts(model, data_path, train_data_path,
                 predicts.append(pre)
                 samples = []
         predicts = np.concatenate(predicts)
-        print("Batches Predictions Finish!!!")
-    return predicts
+        print("    Batches Predictions Finish!!!")
+    print("Step2: Begin Calculator Predicts and Probabilities...")
+    shape = (7500, 5000, 2)
+    labeled_pixel_dict = sio.loadmat(region_data_path)
+    labeled_pixel = labeled_pixel_dict[list(labeled_pixel_dict.keys())[-1]]
+    is_train = np.nonzero(labeled_pixel)
+    labels = np.argmax(predicts, axis=-1) + 1
+    probs = np.max(predicts, axis=1)
+    result = np.zeros(shape)
+    for i, j, k, p in zip(is_train[0], is_train[1], labels, probs):
+        result[i, j, 0] = k
+        result[i, j, 1] = p
+    print("    Saving Predicts and Probabilities into Mat File....")
+    save_array_to_mat(result, filename=filename)
+    print("    Save Predicts Success Check in " + filename)
+    print("Step3: Start Plotting Classification and Confidence map....")
+    plot_region_image_classification_result_prob(filename)
+    print("ALL TASK FINISH!!!")
 
 
 # Write out predicts which is a array to mat file.
@@ -281,7 +299,7 @@ def plot_region_image_classification_result_prob(predict_mat_path):
     plot_predicts(result[:, :, 0])
     plt.xlabel("Classification Predict Map")
     plt.subplot(122)
-    plt.imshow(result[:, :, 1], cmap='Greys')
+    plt.imshow(result[:, :, 1], cmap='YlOrRd')
     plt.xticks([])
     plt.yticks([])
     plt.xlabel("Classification Confidence Map")
@@ -293,8 +311,10 @@ def plot_region_image_classification_result_prob(predict_mat_path):
 # Using CNN model to predict each segments and obtain accordingly predict value and probabilities.
 # Return segments shapefiles and add two field value, predicts and prob.
 # In order to save into shape file,segment.to_file(file_path)
-def get_predicts_segments(segments_path, image_mat_path, norma_methods, m, model):
+def get_predicts_segments(segments_path, image_mat_path, raster_data_path, test_data_path, norma_methods, m, model,
+                          filename):
     segments = gpd.read_file(segments_path)
+    print("Step1: Begin Generating Centroid and Predicting...")
     x = segments.centroid.x
     y = segments.centroid.y
     segments['R'] = [int(a) for a in (2957730.452 - y)]
@@ -310,15 +330,39 @@ def get_predicts_segments(segments_path, image_mat_path, norma_methods, m, model
         k4 = y + n + 1
         block = bands_data[k1:k2, k3:k4]
         samples.append(block)
-    print("Starting Predicts Segments...")
+    print("    Starting Predicts Segments")
     pre = model.predict(np.stack(samples))
-    print("Predicting Finish!!!")
+    print("    Predicting Finish!!!")
     predicts = np.argmax(pre, axis=-1) + 1
     prob = np.max(pre, axis=1)
+
+    print("Step2: Start Saving Predicts and Probabilities...")
     segments['predicts'] = predicts
     segments['prob'] = prob
-    print("Save Results into Shapefiles Success!!")
-    return segments
+    print("    Save Results into Shapefiles Success!!")
+    segments.to_file(filename)
+    print("    Check Shapefile in {}".format(filename))
+
+    print("Step3: Begin Rasterilizing Shapefiles into Raster and Test...")
+    predicts, index = vectors_to_raster(vector_data_path=filename, raster_data_path=raster_data_path, field="predicts")
+    get_test_segments(data_path=image_mat_path, test_data_path=test_data_path, predicts=predicts)
+    # prob, index = vectors_to_raster(vector_data_path=filename, raster_data_path=raster_data_path, field='prob')
+
+    print("Step4: Start Plotting Classification and Confidence Map")
+    ax1 = plt.subplot(121)
+    plot_predicts(predicts)
+    ax1.set_xlabel("Classification Predict Map")
+
+    ax2 = plt.subplot(122)
+    segments.plot(column='prob', cmap='YlOrRd_r', ax=ax2, legend=True)
+    # plt.imshow(prob, cmap='Greys')
+    ax2.set_xticks([])
+    ax2.set_yticks([])
+    ax2.set_xlabel("Classification Confidence Map")
+    # plt.colorbar()
+    # plt.axis('off')
+    plt.show()
+    print("ALL TASK FINISH!!!")
 
 
 # Get test accuracy from the segment predict
@@ -340,8 +384,8 @@ def plot_predicts(arr_2d):
     plt.imshow(arr_3d)
     plt.xticks([])
     plt.yticks([])
-    C1 = mpatches.Patch(color='Blue', label='KYL')
-    C2 = mpatches.Patch(color='Orange', label='ZLD')
+    C1 = mpatches.Patch(color='Lime', label='KYL')
+    C2 = mpatches.Patch(color='GreenYellow', label='ZLD')
     C3 = mpatches.Patch(color='ForestGreen', label='SML')
     C4 = mpatches.Patch(color='Red', label='MWS')
     C5 = mpatches.Patch(color='Coral', label='CFJD')
@@ -427,8 +471,8 @@ def norma_data(data, norma_methods="z-score"):
 palette = {0: (255, 255, 255),  # White
            6: (0, 191, 255),  # DeepSkyBlue
            3: (34, 139, 34),  # ForestGreen
-           2: (255, 165, 0),  # Orange
-           1: (0, 0, 255),  # Blue
+           2: (173, 255, 47),  # GreenYellow
+           1: (0, 255, 0),  # Lime
            5: (255, 127, 80),  # Coral
            4: (255, 0, 0),  # Red
            7: (0, 255, 255),  # Cyan
