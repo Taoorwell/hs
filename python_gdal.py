@@ -299,7 +299,9 @@ def plot_region_image_classification_result_prob(predict_mat_path):
     plot_predicts(result[:, :, 0])
     plt.xlabel("Classification Predict Map")
     plt.subplot(122)
-    plt.imshow(result[:, :, 1], cmap='YlOrRd')
+    prob = result[:, :, 1]
+    prob[prob == 0] = np.nan
+    plt.imshow(prob, cmap='YlOrRd_r')
     plt.xticks([])
     plt.yticks([])
     plt.xlabel("Classification Confidence Map")
@@ -384,8 +386,8 @@ def plot_predicts(arr_2d):
     plt.imshow(arr_3d)
     plt.xticks([])
     plt.yticks([])
-    C1 = mpatches.Patch(color='Lime', label='KYL')
-    C2 = mpatches.Patch(color='GreenYellow', label='ZLD')
+    C1 = mpatches.Patch(color='Magenta', label='KYL')
+    C2 = mpatches.Patch(color='Lime', label='ZLD')
     C3 = mpatches.Patch(color='ForestGreen', label='SML')
     C4 = mpatches.Patch(color='Red', label='MWS')
     C5 = mpatches.Patch(color='Coral', label='CFJD')
@@ -410,7 +412,7 @@ def print_plot_cm(y_true, y_pred):
     cm_data = confusion_matrix(y_true, y_pred, labels=labels)
     df_cm = pd.DataFrame(cm_data, index=labels, columns=labels)
     plt.figure(figsize=(10, 7))
-    sn.heatmap(df_cm, annot=True, cmap=plt.cm.Blues, fmt='0000')
+    sn.heatmap(df_cm, annot=True, cmap='Blues', fmt='0000')
     plt.show()
     return oa, kappa
 
@@ -471,8 +473,8 @@ def norma_data(data, norma_methods="z-score"):
 palette = {0: (255, 255, 255),  # White
            6: (0, 191, 255),  # DeepSkyBlue
            3: (34, 139, 34),  # ForestGreen
-           2: (173, 255, 47),  # GreenYellow
-           1: (0, 255, 0),  # Lime
+           1: (255, 0, 255),  # Magenta
+           2: (0, 255, 0),  # Lime
            5: (255, 127, 80),  # Coral
            4: (255, 0, 0),  # Red
            7: (0, 255, 255),  # Cyan

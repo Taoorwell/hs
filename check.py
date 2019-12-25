@@ -1,7 +1,8 @@
 import tensorflow as tf
 import time
 from python_gdal import *
-
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
 
 # pwd = r"H:/GF/JL/"
 pwd = r"D:/JL/"
@@ -12,17 +13,24 @@ vector_path = pwd + r"vector/new_shp"
 vector = pwd + r"vector/test_samples_0411.shp"
 
 segments_path = pwd + r"images/WORKSPACE/New Workspace/GF2_4314_GS_800805.shp"
+segments_path_1 = pwd + r"images/WORKSPACE/GF2_4314_GS_3_train_1.shp"
+segments_path_2 = pwd + r"images/WORKSPACE/GF2_4314_GS_3_predicts1.shp"
+
+
 # centroid_path = r"G:/GF/JL/sg/40_10_05_centroid_new.shp"
 filename = pwd + r"model/sg/GF2_SEGMENTATION_80_45.shp"
 
-mat_images_path = pwd + r'images/mat/GF_2.mat'
+mat_images_path = pwd + r'images/mat/GF_2.mat'  # 7500*5000 size images whose form is .mat
 
-mat_labels_path = pwd + r'images/mat/GF_2_LABEL_1.mat'
-mat_labels_path_1 = pwd + r'images/mat/GF_2_LABEL_2.mat'
-mat_region_path = pwd + r'images/mat/GF_2_REGION.mat'
+mat_labels_path = pwd + r'images/mat/GF_2_LABEL_1.mat'  # train label
+mat_labels_path_1 = pwd + r'images/mat/GF_2_LABEL_2.mat'  # test label
+mat_region_path = pwd + r'images/mat/GF_2_REGION.mat'  # whole region
 model_path = pwd + r"model/"
-m = 45
+m = [35, 45, 55, 65, 75, 85, 95, 105]
 c = 7
+# label_pixels, index = vectors_to_raster(vector_data_path=segments_path_2, raster_data_path=file_path,
+#                                         field="predicts")
+# get_test_segments(data_path=mat_images_path, test_data_path=mat_labels_path_1,predicts=label_pixels)
 # segments = gpd.read_file(filename=filename)
 # fig, ax = plt.subplots(1, 1)
 # segments.plot(column='predicts', ax=ax, legend=True)
@@ -30,12 +38,13 @@ c = 7
 # ax.set_yticks([])
 # plt.show()
 # model = tf.keras.models.load_model(model_path + "CNN_{}.h5".format(m))
-model = tf.keras.models.load_model(model_path + "MLP_1.h5")
+# model = tf.keras.models.load_model(model_path + "MLP_1.h5")
+#
+# model.summary()
+# write_region_predicts(model=model, image_data_path=mat_images_path, region_data_path=mat_region_path,
+#                       bsize=10000, filename=pwd + r"model/MLP_1_PRE.mat")
 
-model.summary()
-write_region_predicts(model=model, image_data_path=mat_images_path, region_data_path=mat_region_path,
-                      bsize=10000, filename=pwd + r"model/MLP_1_PRE.mat")
-
+# plot_region_image_classification_result_prob(predict_mat_path=pwd+r"model/CNN_35.mat")
 #
 # get_predicts_segments(segments_path=segments_path, image_mat_path=mat_images_path, raster_data_path=file_path,
 #                       test_data_path=mat_labels_path_1, norma_methods='z-score', m=m, model=model,
@@ -220,23 +229,29 @@ write_region_predicts(model=model, image_data_path=mat_images_path, region_data_
 #
 # ###########################################################################
 #
-# # train_samples, train_labels = get_train_sample(data_path=mat_images_path,
-# #                                                train_data_path=mat_labels_path,
-# #                                                c=7, lists=lists, seed=10,
-# #                                                norma_methods='min-max', m=m)
-# #
-# # print(train_samples.shape, train_labels.shape)
+# train_samples, train_labels = get_train_sample(data_path=mat_images_path,
+#                                                train_data_path=mat_labels_path,
+#                                                c=c, norma_methods='min-max')
+#
+#
+# print(train_samples.shape, train_labels.shape)
 #
 # model1 = tf.keras.models.Sequential([tf.keras.layers.Dense(32, activation='relu', input_shape=(4,)),
 #                                     tf.keras.layers.Dropout(0.1),
-#                                     tf.keras.layers.Dense(32, activation='relu'),
+#                                     tf.keras.layers.Dense(16, activation='relu'),
 #                                     tf.keras.layers.Dropout(0.1),
-#                                     tf.keras.layers.Dense(7, activation='softmax')])
-#
-# model1.compile(optimizer=tf.keras.optimizers.Adam(lr=0.001), loss='categorical_crossentropy', metrics=['accuracy'])
+#                                     tf.keras.layers.Dense(c, activation='softmax')])
+# #
+# model1.compile(optimizer=tf.keras.optimizers.Adam(lr=0.01), loss='categorical_crossentropy', metrics=['accuracy'])
 # model1.summary()
-# model1.fit(train_samples, train_labels, batch_size=30, epochs=1000)
-# model1.save(pwd + r"model/MLP_1.h5")
+# model1.fit(train_samples, train_labels, batch_size=30, epochs=500)
+# model1.save(pwd + r"model/2/MLP03.h5")
+# get_test_predict(model=model1, data_path=mat_images_path, test_data_path=mat_labels_path_1,
+#                  bsize=10000, norma_methods="min-max")
+# model1 = tf.keras.models.load_model()
+# write_region_predicts(model1, image_data_path=mat_images_path, region_data_path=mat_region_path,
+#                       bsize=10000, filename=pwd+r"model/2/MLP_PRE", norma_methods="min-max")
+
 # #
 # model = tf.keras.models.load_model(pwd + 'model/MLP_1.h5')
 # predicts = write_region_predicts(model, data_path=mat_images_path, train_data_path=mat_region_path,
@@ -252,30 +267,57 @@ write_region_predicts(model=model, image_data_path=mat_images_path, region_data_
 #
 # print(train_samples.shape, train_labels.shape)
 #
-# model2 = tf.keras.models.Sequential([tf.keras.layers.Conv2D(8, (5, 5), padding='valid', input_shape=(m, m, 4)),
-#                                      tf.keras.layers.BatchNormalization(),
-#                                      tf.keras.layers.Activation(activation='relu'),
-#                                      tf.keras.layers.MaxPool2D(2, padding='same'),
-#                                      tf.keras.layers.Conv2D(12, (3, 3), padding='valid'),
-#                                      tf.keras.layers.BatchNormalization(),
-#                                      tf.keras.layers.Activation(activation='relu'),
-#                                      tf.keras.layers.MaxPool2D(2, padding='same'),
-#                                      tf.keras.layers.Conv2D(12, (3, 3), padding='valid'),
-#                                      tf.keras.layers.BatchNormalization(),
-#                                      tf.keras.layers.Activation(activation='relu'),
-#                                      tf.keras.layers.MaxPool2D(2, padding='same'),
-#                                      tf.keras.layers.Conv2D(12, (3, 3), padding='valid'),
-#                                      tf.keras.layers.BatchNormalization(),
-#                                      tf.keras.layers.Activation(activation='relu'),
-#                                      tf.keras.layers.MaxPool2D(2, padding='same'),
-#                                      tf.keras.layers.Flatten(),
-#                                      tf.keras.layers.Dense(24, activation='relu'),
-#                                      tf.keras.layers.Dropout(0.1),
-#                                      tf.keras.layers.Dense(c, activation='softmax')])
-# model2.compile(optimizer=tf.keras.optimizers.Adam(lr=0.01), loss='categorical_crossentropy', metrics=['accuracy'])
-# model2.summary()
-# # # #
-# model2.fit(train_samples, train_labels, batch_size=30, epochs=100)
+M = []
+I = []
+T = []
+for i in m[:2]:
+    for k in range(0, 3):
+        print("Start Training M == {} CNN AND {} times:".format(i, k))
+        train_samples, train_labels = get_train_sample(data_path=mat_images_path, train_data_path=mat_labels_path,
+                                                       c=c, norma_methods="min-max", m=i)
+        print("Training Samples Shape: {}".format(train_samples.shape))
+        # print("Detail Information about Training Samples:{}".format(get_samples_info(train_labels)))
+
+        model2 = tf.keras.models.Sequential([tf.keras.layers.Conv2D(8, (5, 5), padding='valid',
+                                                                    input_shape=(i, i, 4)),
+                                             tf.keras.layers.BatchNormalization(),
+                                             tf.keras.layers.Activation(activation='relu'),
+                                             tf.keras.layers.MaxPool2D(2, padding='same'),
+                                             tf.keras.layers.Conv2D(12, (3, 3), padding='valid'),
+                                             tf.keras.layers.BatchNormalization(),
+                                             tf.keras.layers.Activation(activation='relu'),
+                                             tf.keras.layers.MaxPool2D(2, padding='same'),
+                                             tf.keras.layers.Conv2D(12, (3, 3), padding='valid'),
+                                             tf.keras.layers.BatchNormalization(),
+                                             tf.keras.layers.Activation(activation='relu'),
+                                             tf.keras.layers.MaxPool2D(2, padding='same'),
+                                             tf.keras.layers.Conv2D(12, (3, 3), padding='valid'),
+                                             tf.keras.layers.BatchNormalization(),
+                                             tf.keras.layers.Activation(activation='relu'),
+                                             tf.keras.layers.MaxPool2D(2, padding='same'),
+                                             tf.keras.layers.Flatten(),
+                                             tf.keras.layers.Dense(24, activation='relu'),
+                                             tf.keras.layers.Dropout(0.1),
+                                             tf.keras.layers.Dense(c, activation='softmax')])
+        model2.compile(optimizer=tf.keras.optimizers.Adam(lr=0.01), loss='categorical_crossentropy',
+                       metrics=['accuracy'])
+        model2.summary()
+        # # # #
+        t1 = time.clock()
+        model2.fit(train_samples, train_labels, batch_size=30, epochs=100)
+        t2 = time.clock()
+        t = t2 - t1
+        M.append(i)
+        I.append(k)
+        T.append(t)
+        model2.save(pwd + r"model/2/CNN_{}_{}".format(m[i], k))
+        print("Finish Training M == {} CNN AND {} times".format(i, k))
+
+print("Finish Training and Saving Model")
+df = pd.DataFrame({"M": M,
+                   "I": I,
+                   "T": T})
+df.to_excel(pwd + r"model/2/statics.xlsx")
 # bands_data, is_train, training_labels = get_prep_data(data_path=file_path, train_data_path=vector)
 # print(bands_data.shape, len(training_labels))
 # print(get_samples_info(training_labels))
