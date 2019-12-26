@@ -8,6 +8,7 @@
 
 # # Load packages
 import os
+import time
 import numpy as np
 import pandas as pd
 import seaborn as sn
@@ -317,14 +318,20 @@ def get_predicts_segments(segments_path, image_mat_path, raster_data_path, test_
                           filename):
     segments = gpd.read_file(segments_path)
     print("Step1: Begin Generating Centroid and Predicting...")
+    t1 = time.clock()
     x = segments.centroid.x
     y = segments.centroid.y
     segments['R'] = [int(a) for a in (2957730.452 - y)]
     segments["C"] = [int(b) for b in (x - 541546.573)]
+    l = len(segments['R'])
     bands_data = get_mat(mat_data_path=image_mat_path)
     bands_data = norma_data(bands_data, norma_methods)
     n = int((m - 1) / 2)
     samples = []
+    pres = []
+    q = l//20000
+    # y = l % 20000
+    p = 0
     for x, y in tqdm(zip(segments['R'], segments['C'])):
         k1 = x - n
         k2 = x + n + 1
@@ -332,11 +339,21 @@ def get_predicts_segments(segments_path, image_mat_path, raster_data_path, test_
         k4 = y + n + 1
         block = bands_data[k1:k2, k3:k4]
         samples.append(block)
-    print("    Starting Predicts Segments")
-    pre = model.predict(np.stack(samples))
+        if len(samples) == 20000 or (len(samples) + p*20000 == l):
+            print("    Starting Predicts Segments")
+            pre = model.predict(np.stack(samples))
+            pres.append(pre)
+            samples = []
+            p = p + 1
+    press = np.concatenate(pres)
+    t2 = time.clock()
+    T = t2 - t1
+    print("    Predicting time {}".format(T))
     print("    Predicting Finish!!!")
-    predicts = np.argmax(pre, axis=-1) + 1
-    prob = np.max(pre, axis=1)
+    predicts = np.argmax(press, axis=-1) + 1
+    number = len(predicts)
+    print("Number of Segments: {}".format(number))
+    prob = np.max(press, axis=1)
 
     print("Step2: Start Saving Predicts and Probabilities...")
     segments['predicts'] = predicts
@@ -347,24 +364,25 @@ def get_predicts_segments(segments_path, image_mat_path, raster_data_path, test_
 
     print("Step3: Begin Rasterilizing Shapefiles into Raster and Test...")
     predicts, index = vectors_to_raster(vector_data_path=filename, raster_data_path=raster_data_path, field="predicts")
-    get_test_segments(data_path=image_mat_path, test_data_path=test_data_path, predicts=predicts)
+    oa, kappa = get_test_segments(data_path=image_mat_path, test_data_path=test_data_path, predicts=predicts)
+    return oa, kappa, T, number
     # prob, index = vectors_to_raster(vector_data_path=filename, raster_data_path=raster_data_path, field='prob')
 
-    print("Step4: Start Plotting Classification and Confidence Map")
-    ax1 = plt.subplot(121)
-    plot_predicts(predicts)
-    ax1.set_xlabel("Classification Predict Map")
-
-    ax2 = plt.subplot(122)
-    segments.plot(column='prob', cmap='YlOrRd_r', ax=ax2, legend=True)
-    # plt.imshow(prob, cmap='Greys')
-    ax2.set_xticks([])
-    ax2.set_yticks([])
-    ax2.set_xlabel("Classification Confidence Map")
-    # plt.colorbar()
-    # plt.axis('off')
-    plt.show()
-    print("ALL TASK FINISH!!!")
+    # print("Step4: Start Plotting Classification and Confidence Map")
+    # ax1 = plt.subplot(121)
+    # plot_predicts(predicts)
+    # ax1.set_xlabel("Classification Predict Map")
+    #
+    # ax2 = plt.subplot(122)
+    # segments.plot(column='prob', cmap='YlOrRd_r', ax=ax2, legend=True)
+    # # plt.imshow(prob, cmap='Greys')
+    # ax2.set_xticks([])
+    # ax2.set_yticks([])
+    # ax2.set_xlabel("Classification Confidence Map")
+    # # plt.colorbar()
+    # # plt.axis('off')
+    # plt.show()
+    # print("ALL TASK FINISH!!!")
 
 
 # Get test accuracy from the segment predict
@@ -413,7 +431,7 @@ def print_plot_cm(y_true, y_pred):
     df_cm = pd.DataFrame(cm_data, index=labels, columns=labels)
     plt.figure(figsize=(10, 7))
     sn.heatmap(df_cm, annot=True, cmap='Blues', fmt='0000')
-    plt.show()
+    # plt.show()
     return oa, kappa
 
 

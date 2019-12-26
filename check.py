@@ -12,7 +12,7 @@ file_path = pwd + r"images/GF2_4314_GS_2.dat"
 vector_path = pwd + r"vector/new_shp"
 vector = pwd + r"vector/test_samples_0411.shp"
 
-segments_path = pwd + r"images/WORKSPACE/New Workspace/GF2_4314_GS_800805.shp"
+segments_path = pwd + r"images/WORKSPACE/New Workspace/GF2_4314_GS_200805.shp"
 segments_path_1 = pwd + r"images/WORKSPACE/GF2_4314_GS_3_train_1.shp"
 segments_path_2 = pwd + r"images/WORKSPACE/GF2_4314_GS_3_predicts1.shp"
 
@@ -267,57 +267,71 @@ c = 7
 #
 # print(train_samples.shape, train_labels.shape)
 #
-M = []
-I = []
-T = []
-for i in m[:2]:
-    for k in range(0, 3):
-        print("Start Training M == {} CNN AND {} times:".format(i, k))
-        train_samples, train_labels = get_train_sample(data_path=mat_images_path, train_data_path=mat_labels_path,
-                                                       c=c, norma_methods="min-max", m=i)
-        print("Training Samples Shape: {}".format(train_samples.shape))
-        # print("Detail Information about Training Samples:{}".format(get_samples_info(train_labels)))
-
-        model2 = tf.keras.models.Sequential([tf.keras.layers.Conv2D(8, (5, 5), padding='valid',
-                                                                    input_shape=(i, i, 4)),
-                                             tf.keras.layers.BatchNormalization(),
-                                             tf.keras.layers.Activation(activation='relu'),
-                                             tf.keras.layers.MaxPool2D(2, padding='same'),
-                                             tf.keras.layers.Conv2D(12, (3, 3), padding='valid'),
-                                             tf.keras.layers.BatchNormalization(),
-                                             tf.keras.layers.Activation(activation='relu'),
-                                             tf.keras.layers.MaxPool2D(2, padding='same'),
-                                             tf.keras.layers.Conv2D(12, (3, 3), padding='valid'),
-                                             tf.keras.layers.BatchNormalization(),
-                                             tf.keras.layers.Activation(activation='relu'),
-                                             tf.keras.layers.MaxPool2D(2, padding='same'),
-                                             tf.keras.layers.Conv2D(12, (3, 3), padding='valid'),
-                                             tf.keras.layers.BatchNormalization(),
-                                             tf.keras.layers.Activation(activation='relu'),
-                                             tf.keras.layers.MaxPool2D(2, padding='same'),
-                                             tf.keras.layers.Flatten(),
-                                             tf.keras.layers.Dense(24, activation='relu'),
-                                             tf.keras.layers.Dropout(0.1),
-                                             tf.keras.layers.Dense(c, activation='softmax')])
-        model2.compile(optimizer=tf.keras.optimizers.Adam(lr=0.01), loss='categorical_crossentropy',
-                       metrics=['accuracy'])
-        model2.summary()
-        # # # #
-        t1 = time.clock()
-        model2.fit(train_samples, train_labels, batch_size=30, epochs=100)
-        t2 = time.clock()
-        t = t2 - t1
-        M.append(i)
-        I.append(k)
-        T.append(t)
-        model2.save(pwd + r"model/2/CNN_{}_{}".format(m[i], k))
-        print("Finish Training M == {} CNN AND {} times".format(i, k))
-
-print("Finish Training and Saving Model")
-df = pd.DataFrame({"M": M,
-                   "I": I,
-                   "T": T})
-df.to_excel(pwd + r"model/2/statics.xlsx")
+# OA = []
+# K = []
+# M = []
+# T = []
+# l = os.listdir(model_path + r"2/")
+# print(l)
+# for i in l:
+#     model = tf.keras.models.load_model(model_path + r"2/" + i)
+#     oa, kappa = get_test_predict(model, data_path=mat_images_path, test_data_path=mat_labels_path_1,
+#                                  bsize=10000, norma_methods='min-max', m=int(i.split('_')[-2]))
+#     M.append(i.split('_')[-1])
+#     T.append(i.split('_')[-2])
+#     OA.append(oa)
+#     K.append(kappa)
+# df = pd.DataFrame({"M": M, "T": T, "OA": OA, "K":K})
+# df.to_excel(pwd)
+# M = []
+# I = []
+# T = []
+# for i in m:
+#     train_samples, train_labels = get_train_sample(data_path=mat_images_path, train_data_path=mat_labels_path,
+#                                                    c=c, norma_methods="min-max", m=i)
+#     print("Training Samples Shape: {}".format(train_samples.shape))
+#     # print("Detail Information about Training Samples:{}".format(get_samples_info(train_labels)))
+#     for k in range(1, 4):
+#         print("Start Training M == {} CNN AND {} times:".format(i, k))
+#         model2 = tf.keras.models.Sequential([tf.keras.layers.Conv2D(8, (5, 5), padding='valid',
+#                                                                     input_shape=(i, i, 4)),
+#                                             tf.keras.layers.BatchNormalization(),
+#                                             tf.keras.layers.Activation(activation='relu'),
+#                                             tf.keras.layers.MaxPool2D(2, padding='same'),
+#                                             tf.keras.layers.Conv2D(12, (3, 3), padding='valid'),
+#                                             tf.keras.layers.BatchNormalization(),
+#                                             tf.keras.layers.Activation(activation='relu'),
+#                                             tf.keras.layers.MaxPool2D(2, padding='same'),
+#                                             tf.keras.layers.Conv2D(12, (3, 3), padding='valid'),
+#                                             tf.keras.layers.BatchNormalization(),
+#                                             tf.keras.layers.Activation(activation='relu'),
+#                                             tf.keras.layers.MaxPool2D(2, padding='same'),
+#                                             tf.keras.layers.Conv2D(12, (3, 3), padding='valid'),
+#                                             tf.keras.layers.BatchNormalization(),
+#                                             tf.keras.layers.Activation(activation='relu'),
+#                                             tf.keras.layers.MaxPool2D(2, padding='same'),
+#                                             tf.keras.layers.Flatten(),
+#                                             tf.keras.layers.Dense(24, activation='relu'),
+#                                             tf.keras.layers.Dropout(0.1),
+#                                             tf.keras.layers.Dense(c, activation='softmax')])
+#         model2.compile(optimizer=tf.keras.optimizers.Adam(lr=0.01), loss='categorical_crossentropy',
+#                        metrics=['accuracy'])
+#         model2.summary()
+#         t1 = time.clock()
+#         model2.fit(train_samples, train_labels, batch_size=30, epochs=100)
+#         t2 = time.clock()
+#         t = t2 - t1
+#         M.append(i)
+#         I.append(k)
+#         T.append(t)
+#         model2.save(pwd + r"model/cpu/CNN_{}_{}.h5".format(i, k))
+#         print("Finish Training M == {} CNN AND {} times".format(i, k))
+#         del model2
+# print("Finish Training and Saving Model")
+# df = pd.DataFrame({"M": M,
+#                    "I": I,
+#                    "T": T})
+# df.to_excel(pwd + r"model/cpu/statics.xlsx")
 # bands_data, is_train, training_labels = get_prep_data(data_path=file_path, train_data_path=vector)
 # print(bands_data.shape, len(training_labels))
 # print(get_samples_info(training_labels))
@@ -402,3 +416,36 @@ df.to_excel(pwd + r"model/2/statics.xlsx")
 
 # save_array_to_mat(predicts, filename=r"E:/temp/CNN_33.mat")
 # write_whole_image_classification_result(predicts, shape=(801, 801))
+L = os.listdir(pwd + r"model/gpu/GF_MODEL/valid/")
+
+M, S, N, T, OA, KAPPA = [], [], [], [], [], []
+for l in L:
+    for s in range(20, 90, 10):
+        print(l, s)
+        model = tf.keras.models.load_model(pwd + r"model/gpu/GF_MODEL/valid/" + l)
+        oa, kappa, t, number = get_predicts_segments(segments_path=pwd +
+                                                     r"images/WORKSPACE/New Workspace/GF2_4314_GS_{}0805.shp".format(s),
+                                                     image_mat_path=mat_images_path, raster_data_path=file_path,
+                                                     test_data_path=mat_labels_path_1, norma_methods='min-max',
+                                                     m=int(l.split('_')[-2]),
+                                                     model=model,
+                                                     filename=pwd +
+                                                     r"images/WORKSPACE/New Workspace/GF2_4314_GS_{}_{}0805_result.shp"
+                                                     .format(int(l.split("_")[-2]), s))
+        M.append(int(l.split('_')[-2]))
+        S.append(s)
+        N.append(number)
+        T.append(t)
+        OA.append(oa)
+        KAPPA.append(kappa)
+df = pd.DataFrame({"M": M, "S": S, "N": N, "T": T, "OA": OA, "KAPPA": KAPPA})
+df.to_excel(pwd + r"model/gpu/2.xlsx")
+
+
+
+# model.summary()
+# get_predicts_segments(segments_path=segments_path, image_mat_path=mat_images_path, raster_data_path=file_path,
+#                       test_data_path=mat_labels_path_1, norma_methods="min-max", m=45, model=model,
+#                       filename=pwd + r"images/WORKSPACE/New Workspace/GF2_4314_GS_200805_results.shp")
+# oa, kappa = get_test_predict(model=model, data_path=mat_images_path, test_data_path=mat_labels_path_1,
+#                              bsize=10000, norma_methods="min-max", m=105)
