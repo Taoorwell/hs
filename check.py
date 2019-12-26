@@ -441,8 +441,6 @@ for l in L:
 df = pd.DataFrame({"M": M, "S": S, "N": N, "T": T, "OA": OA, "KAPPA": KAPPA})
 df.to_excel(pwd + r"model/gpu/2.xlsx")
 
-
-
 # model.summary()
 # get_predicts_segments(segments_path=segments_path, image_mat_path=mat_images_path, raster_data_path=file_path,
 #                       test_data_path=mat_labels_path_1, norma_methods="min-max", m=45, model=model,

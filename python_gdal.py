@@ -365,6 +365,7 @@ def get_predicts_segments(segments_path, image_mat_path, raster_data_path, test_
     print("Step3: Begin Rasterilizing Shapefiles into Raster and Test...")
     predicts, index = vectors_to_raster(vector_data_path=filename, raster_data_path=raster_data_path, field="predicts")
     oa, kappa = get_test_segments(data_path=image_mat_path, test_data_path=test_data_path, predicts=predicts)
+    del predicts, pres, press, samples, segments
     return oa, kappa, T, number
     # prob, index = vectors_to_raster(vector_data_path=filename, raster_data_path=raster_data_path, field='prob')
 
