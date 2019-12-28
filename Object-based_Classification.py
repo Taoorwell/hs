@@ -25,14 +25,13 @@ y_data = train_segments["CLASS_ID"]
 
 scaler = MinMaxScaler()
 # Train and Test Split
-x_train, x_test, y_train, y_test = train_test_split(x_data, y_data, test_size=.2, random_state=3,
+x_train, x_test, y_train, y_test = train_test_split(x_data, y_data, test_size=.0, random_state=3,
                                                     shuffle=True)
 scaler.fit(x_train)
 x_train = scaler.transform(x_train)
-x_test = scaler.transform(x_test)
+# x_test = scaler.transform(x_test)
 # Check Train and Test Samples Size
-print("Train Samples List: {}\n".format(get_samples_info(y_train)),
-      "Test Samples List: {}".format(get_samples_info(y_test)))
+print("Train Samples List: {}\n".format(get_samples_info(y_train)))
 
 
 # Load Classifiers and Grid Search and Cross Validation
@@ -47,8 +46,8 @@ param_grid = {"C": [0.01, 0.1, 1, 10, 100, 1000], "gamma": [0.001, 0.01, 0.1, 1,
 grid_search = GridSearchCV(SVC(), param_grid, cv=5)
 grid_search.fit(x_train, y_train)
 
-print("Test Set Score:{}".format(grid_search.score(x_test, y_test)))
-print(grid_search.predict(x_test))
+# print("Test Set Score:{}".format(grid_search.score(x_test, y_test)))
+# print(grid_search.predict(x_test))
 print("Best Parameter:{}".format(grid_search.best_params_))
 print("Best cross-validation score:{}".format(grid_search.best_score_))
 print("Best estimator:{}".format(grid_search.best_estimator_))
@@ -66,14 +65,15 @@ print(region_segments.columns)
 region_data = region_segments[:][region_segments.columns[:-1]]
 region_data = scaler.transform(region_data)
 # print(len(region_data))
-#
-# # Prediction
+# #
+# # # Prediction
 region_predicts = grid_search.predict(region_data)
-# region_predicts = knn.predict(region_data)
-# print(region_predicts)
-#
-# # Write into origin shape-files
+# # region_predicts = knn.predict(region_data)
+print(region_predicts)
+# #
+# # # Write into origin shape-files
 region_segments["predicts"] = region_predicts
 print(region_segments)
-# region_segments.plot(column="predicts")
+region_segments.plot(column="predicts")
+plt.show()
 region_segments.to_file(filename=pwd + r"images/WORKSPACE/GF2_4314_GS_3_predicts1.shp")

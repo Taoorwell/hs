@@ -1,91 +1,121 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+from mpl_toolkits.mplot3d import axes3d
 
-file_path = "file.xlsx"
-df = pd.read_excel(file_path)
+file_path = "D:/JL/model/Results.xlsx"
+df1 = pd.read_excel(file_path, sheet_name="OCNN")
+df = pd.read_excel(file_path, sheet_name="CNN")
+# print(df)
 fig = plt.figure(num=0, figsize=(8, 4))
-# # B & M & IP_PCA DATA
-# print(df_ip_pca)
-# # IP & CNN_2D
-# df_ip = df[df["Model_Category"] == "CNN_2D"].sort_values("M")
-# print(df_ip_pca)
 
-
-# # CNN_1D & MLP
-df_1d = df[df['Model_Category'] == 'CNN_1D']
-df_mlp = df[df['Model_Category'] == 'MLP']
-# CNN_2D & DATA & M
-# df_ip = df[(df["DATA"] == "IP") & (df["Model_Category"] == "CNN_2D")].sort_values("M")
-# df_p = df[(df["DATA"] == "P") & (df["Model_Category"] == "CNN_2D")].sort_values("M")
-# df_pu = df[(df["DATA"] == "PU") & (df["Model_Category"] == "CNN_2D")].sort_values("M")
-# df_ksc = df[(df["DATA"] == "KSC") & (df["Model_Category"] == "CNN_2D")].sort_values("M")
-# print(df_ip)
-
-
-barWidth = 0.25
-bar1 = list(df_1d["OA"])
-bar11 = list(df_1d["KAPPA"])
-bar2 = list(df_mlp["OA"])
-bar22 = list(df_mlp["KAPPA"])
-# print(bar1, bar2)
-r1 = np.arange(0, 4, 1)
-r2 = [x + barWidth for x in r1]
-# r3 = [x + barWidth for x in r2]
-# r4 = [x + barWidth for x in r3]
-
-plt.bar(r1, bar11, color='red', width=barWidth, edgecolor='white', label='CNN_1D', alpha=0.5)
-# plt.bar(r1, bar11, color='red', width=barWidth, edgecolor='white', alpha=0.5)
-# plt.bar(r2, bar2, color='blue', width=barWidth, edgecolor='white', alpha=0.5)
-plt.bar(r2, bar22, color='blue', width=barWidth, edgecolor='white', label='MLP', alpha=0.5)
-
-plt.xlabel('DATA', fontweight='bold')
-plt.ylabel("KAPPA", fontweight='bold')
-plt.xticks([r+0.15 for r in np.arange(0, 4, 1)], ["IP", "KSC", "P", "PU"])
-plt.ylim(0.5, 1.0)
-plt.legend(loc=2, prop={'size': 8})
-
-plt.show()
-
-# # subplot for Data
-# df3 = [df_ip, df_p, df_pu, df_ksc]
-# tup = [(0, 0), (0, 1), (1, 0), (1, 1)]
-# for df, i in zip(df3, tup):
-#     ax = plt.subplot2grid((2, 2), i)
-#     ax.bar(list(df["M"]), list(df["OA"]), label="OA", color="red", alpha=1.0)
-#     # ax.bar(list(df["M"]), list(df["KAPPA"]), label="KAPPA", color="yellow", alpha=0.8)
-#     ax.set_xticks(np.arange(5, 42, 4))
-#     ax.set_ylim(0.9, 1.0)
-#     ax.set_xlabel("M")
-#     ax.set_ylabel("OA", fontsize=8)
-#     # ax.legend()
-
-
-# group bar plot
+########
+# Bar plot on Time!!!
 # barWidth = 0.25
-# bar1 = list(df_ip["OA"])
-# bar2 = list(df_p["OA"])
-# bar3 = list(df_pu["OA"])
-# # bar4 = list(df_ksc["OA"])
+# bar1 = list(df["T-train-gpu"])
+# # bar3 = list(df["T-pre-gpu"]/60)
 #
-# r1 = np.arange(0, 20, 2)
+# # print(bar1)
+# # bar11 = list(df_1d["KAPPA"])
+# bar2 = list(df["T-train-cpu"])
+# # bar4 = list(df["T-pre-cpu"]/60)
+#
+# # print(bar2)
+# # bar22 = list(df_mlp["KAPPA"])
+# # # print(bar1, bar2)
+# r1 = np.arange(0, 8, 1)
 # r2 = [x + barWidth for x in r1]
-# r3 = [x + barWidth for x in r2]
-# r4 = [x + barWidth for x in r3]
+# # print(r1, r2)
+# # r3 = [x + barWidth for x in r2]
+# # r4 = [x + barWidth for x in r3]
 #
-# plt.bar(r1, bar1, color='red', width=barWidth, edgecolor='white', label='IP')
-# plt.bar(r2, bar2, color='blue', width=barWidth, edgecolor='white', label='P', alpha=0.5)
-# plt.bar(r3, bar3, color='pink', width=barWidth, edgecolor='white', label='PU')
-# # plt.bar(r4, bar4, color='blue', width=barWidth, edgecolor='white', label='KSC')
+# plt.bar(r1, bar1, color='black', width=barWidth, edgecolor='white', label='train_gpu', alpha=0.7)
+# # plt.bar(r1, bar3, color='black', width=barWidth, edgecolor='white', label='predict_gpu', alpha=0.7)
+# # plt.bar(r2, bar4, color='grey', width=barWidth, edgecolor='white', label='predict_cpu', alpha=0.7)
+# plt.bar(r2, bar2, color='grey', width=barWidth, edgecolor='white', label='train-cpu', alpha=0.7)
 #
-# plt.xlabel('M', fontweight='bold')
-# plt.ylabel("OA", fontweight='bold')
-# plt.xticks([r + barWidth for r in np.arange(0, 20, 2)], np.arange(5, 42, 4))
-# plt.ylim(0.9, 1.0)
-# plt.legend(loc=2, prop={'size': 6})
+# # plt.xlabel('M', fontweight='bold')
+# plt.ylabel("Time(s)", fontweight='bold')
+# plt.ylabel("Time(min)", fontweight='bold')
+#
+# plt.xticks([r+0.15 for r in np.arange(0, 9, 1)], ["35x35", "45x45", "55x55", "65x65",
+#                                                   "75x75", "85x85", "95x95", "105x105"])
+# plt.yticks([0, 160, 1000, 2000, 3000, 4000])
+# # plt.ylim(0.5, 1.0)
+# plt.hlines(y=160, xmin=-1, xmax=8, color='red', linestyles='dashed')
+# plt.legend(loc=2, prop={'size': 12})
 #
 # plt.show()
+########################################
+
+
+##############################################
+# Line plot on Overall accuracy and Kappa
+# x = np.arange(0, 8, 1)
+# oa = df["OA"]
+# k = df["K"]
+#
+# plt.plot(x, oa, color='black', label="OA", marker='D', linestyle='-.')
+# plt.plot(x, k, color='grey', label="Kappa", marker='v', linestyle=':')
+# plt.xticks(x, ["35x35", "45x45", "55x55", "65x65", "75x75", "85x85", "95x95", "105x105"])
+# plt.legend(loc='best', prop={'size': 12})
+# plt.xlabel("M", fontweight='bold')
+# plt.ylabel("OA & Kappa", fontweight='bold')
+# plt.show()
+############################################
+############################
+# Plot surface 3D
+# x = np.arange(35, 115, 10)
+# y = np.arange(20, 90, 10)
+# X = np.zeros((7, 8))
+# Y = np.zeros((8, 7))
+#
+# for i in range(0, 7, 1):
+#     X[i] = x
+# # print(X)
+# for j in range(0, 8, 1):
+#     Y[j] = y
+# # print(Y)
+# a = np.array(df1['OA']).reshape(8, 7)
+#
+# norm = plt.Normalize(a.min(), a.max())
+# colors = cm.rainbow(norm(a))
+# rcount, ccount, _ = colors.shape
+# ax = fig.add_subplot(111, projection='3d')
+# c = ax.plot_surface(X, Y.T, a.T, facecolors=colors, shade=False)
+# c.set_facecolor((0, 0, 0, 0))
+# ax.scatter(45, 30, 0.9092, marker='^', s=100, color='red')
+# ax.text(45-1, 30, 0.9092, s='M=45, S=30')
+# ax.scatter(105, 60, 0.5169, marker='v', s=100, color='cyan')
+# ax.text(105-1, 60, 0.5169, s='M=105, S=60')
+#
+# ax.set_xticks(x)
+# ax.set_xlabel("M")
+# ax.set_ylabel("S")
+# ax.set_zlabel("OA")
+#
+# plt.show()
+############################
+
+################################
+ax = fig.add_subplot(111, projection='3d')
+for z in [80, 70, 60, 50, 40, 30, 20]:
+    df2 = df1[df1['S'] == z].sort_values("M")
+    m = df2["M"]
+    t1 = df2["T-pre-cpu"]
+    t2 = df2['T-pre-gpu']
+    # cs = [c]*len(m)
+    ax.bar(m-0.75, t1, zs=z, zdir='y', alpha=0.7, color='black', width=1.5, label='CPU_predict')
+    ax.bar(m+0.75, t2, zs=z, zdir='y', alpha=1.0, width=1.5, color='white',edgecolor='black', hatch="//",
+           label='GPU_predict')
+ax.set_xticks(np.arange(35, 115, 10))
+ax.set_xlabel("M")
+ax.set_ylabel("S")
+ax.set_zlabel("Time(s)")
+ax.legend(loc=2)
+plt.show()
+
 # # 3D plot B & M & OA KAPPA COF
 # DATA = ["IP", "P", "PU", "KSC"]
 # index = ["OA", "KAPPA", "Cof1", "Cof2", "Cof3"]
@@ -134,7 +164,7 @@ plt.show()
 #     ax.set_zlabel(index[j], fontsize=8)
 # ax.set_zlim()
 
-plt.show()
+# plt.show()
 
 # fig = plt.figure(figsize=(10, 5))
 # # ax = Axes3D(fig)

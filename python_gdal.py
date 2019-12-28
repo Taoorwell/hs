@@ -230,7 +230,8 @@ def write_region_predicts(model, image_data_path, region_data_path,
     else:
         predicts = []
         n = int((m - 1) / 2)
-        for i, j in enumerate(index):
+        t1 = time.clock()
+        for i, j in tqdm(enumerate(index)):
             k1 = j[0] - n
             k2 = j[0] + n + 1
             k3 = j[1] - n
@@ -244,9 +245,12 @@ def write_region_predicts(model, image_data_path, region_data_path,
                     pre = pre.reshape((pre.shape[0], pre.shape[1], pre.shape[2], pre.shape[3], -1))
                 pre = model.predict(pre)
                 predicts.append(pre)
+                del samples
                 samples = []
         predicts = np.concatenate(predicts)
+        t2 = time.clock()
         print("    Batches Predictions Finish!!!")
+        print("    Time Consuming: {}".format(t2 - t1))
     print("Step2: Begin Calculator Predicts and Probabilities...")
     shape = (7500, 5000, 2)
     labeled_pixel_dict = sio.loadmat(region_data_path)
@@ -261,8 +265,8 @@ def write_region_predicts(model, image_data_path, region_data_path,
     print("    Saving Predicts and Probabilities into Mat File....")
     save_array_to_mat(result, filename=filename)
     print("    Save Predicts Success Check in " + filename)
-    print("Step3: Start Plotting Classification and Confidence map....")
-    plot_region_image_classification_result_prob(filename)
+    # print("Step3: Start Plotting Classification and Confidence map....")
+    # plot_region_image_classification_result_prob(filename)
     print("ALL TASK FINISH!!!")
 
 
@@ -314,8 +318,8 @@ def plot_region_image_classification_result_prob(predict_mat_path):
 # Using CNN model to predict each segments and obtain accordingly predict value and probabilities.
 # Return segments shapefiles and add two field value, predicts and prob.
 # In order to save into shape file,segment.to_file(file_path)
-def get_predicts_segments(segments_path, image_mat_path, raster_data_path, test_data_path, norma_methods, m, model,
-                          filename):
+def get_predicts_segments(segments_path, image_mat_path, norma_methods, m, model,
+                          ):
     segments = gpd.read_file(segments_path)
     print("Step1: Begin Generating Centroid and Predicting...")
     t1 = time.clock()
@@ -349,24 +353,24 @@ def get_predicts_segments(segments_path, image_mat_path, raster_data_path, test_
     t2 = time.clock()
     T = t2 - t1
     print("    Predicting time {}".format(T))
-    print("    Predicting Finish!!!")
+    # print("    Predicting Finish!!!")
     predicts = np.argmax(press, axis=-1) + 1
-    number = len(predicts)
-    print("Number of Segments: {}".format(number))
-    prob = np.max(press, axis=1)
+    # number = len(predicts)
+    # print("Number of Segments: {}".format(number))
+    # prob = np.max(press, axis=1)
 
-    print("Step2: Start Saving Predicts and Probabilities...")
-    segments['predicts'] = predicts
-    segments['prob'] = prob
-    print("    Save Results into Shapefiles Success!!")
-    segments.to_file(filename)
-    print("    Check Shapefile in {}".format(filename))
-
-    print("Step3: Begin Rasterilizing Shapefiles into Raster and Test...")
-    predicts, index = vectors_to_raster(vector_data_path=filename, raster_data_path=raster_data_path, field="predicts")
-    oa, kappa = get_test_segments(data_path=image_mat_path, test_data_path=test_data_path, predicts=predicts)
-    del predicts, pres, press, samples, segments
-    return oa, kappa, T, number
+    # print("Step2: Start Saving Predicts and Probabilities...")
+    # segments['predicts'] = predicts
+    # segments['prob'] = prob
+    # print("    Save Results into Shapefiles Success!!")
+    # segments.to_file(filename)
+    # print("    Check Shapefile in {}".format(filename))
+    #
+    # print("Step3: Begin Rasterilizing Shapefiles into Raster and Test...")
+    # predicts, index = vectors_to_raster(vector_data_path=filename, raster_data_path=raster_data_path, field="predicts")
+    # oa, kappa = get_test_segments(data_path=image_mat_path, test_data_path=test_data_path, predicts=predicts)
+    # del predicts, pres, press, samples, segments
+    return T, predicts
     # prob, index = vectors_to_raster(vector_data_path=filename, raster_data_path=raster_data_path, field='prob')
 
     # print("Step4: Start Plotting Classification and Confidence Map")
@@ -432,7 +436,7 @@ def print_plot_cm(y_true, y_pred):
     df_cm = pd.DataFrame(cm_data, index=labels, columns=labels)
     plt.figure(figsize=(10, 7))
     sn.heatmap(df_cm, annot=True, cmap='Blues', fmt='0000')
-    # plt.show()
+    plt.show()
     return oa, kappa
 
 
