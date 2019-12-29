@@ -9,41 +9,51 @@ pwd = r"D:/JL/"
 # pwd = r"G:/GF/JL/"
 # pwd = r"/content/drive/'My Drive'/Drive_Data"
 file_path = pwd + r"images/GF2_4314_GS_2.dat"
-vector_path = pwd + r"vector/new_shp"
-vector = pwd + r"vector/test_samples_0411.shp"
+vector = pwd + r"vector/train_samples_0411.shp"  # test shapefile
 
-segments_path = pwd + r"images/WORKSPACE/New Workspace/"
-segments_path_1 = pwd + r"images/WORKSPACE/GF2_4314_GS_3_train_1.shp"
-segments_path_2 = pwd + r"images/WORKSPACE/GF2_4314_GS_3_predicts1.shp"
-
-
-# centroid_path = r"G:/GF/JL/sg/40_10_05_centroid_new.shp"
-filename = pwd + r"model/sg/GF2_SEGMENTATION_80_45.shp"
+segments_path = pwd + r"images/WORKSPACE/"  # segments shapefiles
 
 mat_images_path = pwd + r'images/mat/GF_2.mat'  # 7500*5000 size images whose form is .mat
-
 mat_labels_path = pwd + r'images/mat/GF_2_LABEL_1.mat'  # train label
 mat_labels_path_1 = pwd + r'images/mat/GF_2_LABEL_2.mat'  # test label
 mat_region_path = pwd + r'images/mat/GF_2_REGION.mat'  # whole region
 model_path = pwd + r"model/"
 predicts_mat_path = 'D:/JL/model/cpu/mat'
-# m = [35, 45, 55, 65, 75, 85, 95, 105]
-m = [55, 85, 95]
+m = [35, 45, 55, 65, 75, 85, 95, 105]
+s = [20, 30, 40, 50, 60, 70, 80]
+# m = [55, 85, 95]
 c = 7
 
-M, T = [], []
-for k in m:
-    model = tf.keras.models.load_model(model_path+r"gpu/GF_MODEL/valid/CNN_{}".format(k))
-    model.summary()
-    for i in range(20, 90, 10):
-        t, _ = get_predicts_segments(segments_path=segments_path+r"GF2_4314_GS_{}0805.shp".format(i),
-                                     image_mat_path=mat_images_path,
-                                     norma_methods="min-max", m=k, model=model)
-        M.append(m)
-        T.append(t)
-df = pd.DataFrame({"M": M,
-                   "T": T})
-df.to_excel(r'D:/JL/model/cpu/cpu_pre.xlsx')
+# segments = gpd.read_file(filename=pwd + r"images/WORKSPACE/New Workspace/GF2_4314_GS_3008053_predicts.shp")
+# print(segments.columns)
+predicts, index = vectors_to_raster(vector_data_path=pwd +
+                                    r"images/WORKSPACE/New Workspace/GF2_4314_GS_3008053_predicts.shp",
+                                    raster_data_path=file_path, field='predicts')
+oa, kappa = get_test_segments(data_path=mat_images_path, test_data_path=mat_labels_path_1, predicts=predicts,
+                              norma_methods="min-max")
+
+plot_segments_predicts_prob(segment_path=pwd + r"images/WORKSPACE/New Workspace/GF2_4314_GS_3008053_predicts.shp",
+                            raster_data_path=file_path, field='predicts')
+
+# predicts, index = vectors_to_raster(vector_data_path=pwd + r"images/WORKSPACE/GF2_4314_GS_3_predicts1.shp",
+#                                     raster_data_path=file_path, field='predicts')
+# oa, kappa = get_test_segments(data_path=mat_images_path, test_data_path=mat_labels_path_1,
+#                               predicts=predicts, norma_methods='min-max')
+# plot_segments_predicts_prob(segment_path=pwd + r"images/WORKSPACE/GF2_4314_GS_3_predicts1.shp",
+#                             raster_data_path=file_path)
+# M, T = [], []
+# for k in m:
+#     model = tf.keras.models.load_model(model_path+r"gpu/GF_MODEL/valid/CNN_{}".format(k))
+#     model.summary()
+#     for i in range(20, 90, 10):
+#         t, _ = get_predicts_segments(segments_path=segments_path+r"GF2_4314_GS_{}0805.shp".format(i),
+#                                      image_mat_path=mat_images_path,
+#                                      norma_methods="min-max", m=k, model=model)
+#         M.append(m)
+#         T.append(t)
+# df = pd.DataFrame({"M": M,
+#                    "T": T})
+# df.to_excel(r'D:/JL/model/cpu/cpu_pre.xlsx')
 
 
 # bands_data = get_mat(mat_data_path=mat_region_path)
@@ -251,23 +261,39 @@ df.to_excel(r'D:/JL/model/cpu/cpu_pre.xlsx')
 #
 #
 # model1.save(pwd + r"model/2/MLP03.h5")
-# get_test_predict(model=model1, data_path=mat_images_path, test_data_pathtrain_samples, train_labels = get_train_sample(data_path=mat_images_path,
-# #                                                train_data_path=mat_labels_path,
-# #                                                c=c, norma_methods='min-max')
+
 # #
 # #
-# # print(train_samples.shape, train_labels.shape)
+# train_samples, train_labels = get_train_sample(data_path=mat_images_path, train_data_path=mat_labels_path,
+#                                                c=c, norma_methods="min-max", m=1)
+# print(train_samples.shape, train_labels.shape)
+# # # #
+# model1 = tf.keras.models.Sequential([tf.keras.layers.Dense(32, activation='relu', input_shape=(4,)),
+#                                      tf.keras.layers.Dropout(0.1),
+#                                      tf.keras.layers.Dense(16, activation='relu'),
+#                                      tf.keras.layers.Dropout(0.1),
+#                                      tf.keras.layers.Dense(7, activation='softmax')])
 # # #
-# # model1 = tf.keras.models.Sequential([tf.keras.layers.Dense(32, activation='relu', input_shape=(4,)),
-# #                                      tf.keras.layers.Dropout(0.1),
-# #                                      tf.keras.layers.Dense(16, activation='relu'),
-# #                                      tf.keras.layers.Dropout(0.1),
-# #                                      tf.keras.layers.Dense(7, activation='softmax')])
-# # #
-# # model1.compile(optimizer=tf.keras.optimizers.Adam(lr=0.01), loss='categorical_crossentropy', metrics=['accuracy'])
-# # model1.summary()
-# # model1.fit(train_samples, train_labels, batch_size=30, epochs=500)=mat_labels_path_1,
-#                  bsize=10000, norma_methods="min-max")
+# model1.compile(optimizer=tf.keras.optimizers.Adam(lr=0.01), loss='categorical_crossentropy', metrics=['accuracy'])
+# model1.summary()
+# t1 = time.clock()
+# model1.fit(train_samples, train_labels, batch_size=30, epochs=500)
+# t2 = time.clock()
+# print("Training Time Consuming: {}".format(t2-t1))
+#
+# bands_data, is_train, _ = get_mat_info(mat_data_path=mat_images_path, train_mat_data_path=mat_region_path)
+# bands_data = norma_data(bands_data, norma_methods="min-max")
+# index = np.array(is_train).transpose((1, 0))
+# samples = []
+# t3 = time.clock()
+# for i in index:
+#     sample = bands_data[i[0], i[1]]
+#     samples.append(sample)
+# samples = np.stack(samples)
+# predicts = model1.predict(samples)
+# t4 = time.clock()
+# print("Predicting Time Consuming: {} ".format(t4-t3))
+
 # model1 = tf.keras.models.load_model()
 # write_region_predicts(model1, image_data_path=mat_images_path, region_data_path=mat_region_path,
 #                       bsize=10000, filename=pwd+r"model/2/MLP_PRE", norma_methods="min-max")

@@ -5,13 +5,17 @@ from matplotlib import cm
 from mpl_toolkits.mplot3d import axes3d
 
 file_path = "D:/JL/model/Results.xlsx"
-df1 = pd.read_excel(file_path, sheet_name="OCNN")
 df = pd.read_excel(file_path, sheet_name="CNN")
+df1 = pd.read_excel(file_path, sheet_name="OCNN")
+df2 = pd.read_excel(file_path, sheet_name="MLP")
+df3 = pd.read_excel(file_path, sheet_name='SVM-OBJECT')
+df4 = pd.read_excel(file_path, sheet_name='Time')
 # print(df)
 fig = plt.figure(num=0, figsize=(8, 4))
 
 ########
 # Bar plot on Time!!!
+# predict and train time of CNN
 # barWidth = 0.25
 # bar1 = list(df["T-train-gpu"])
 # # bar3 = list(df["T-pre-gpu"]/60)
@@ -52,6 +56,7 @@ fig = plt.figure(num=0, figsize=(8, 4))
 
 ##############################################
 # Line plot on Overall accuracy and Kappa
+# Overall accuracy and Kappa on CNN with different M
 # x = np.arange(0, 8, 1)
 # oa = df["OA"]
 # k = df["K"]
@@ -66,6 +71,7 @@ fig = plt.figure(num=0, figsize=(8, 4))
 ############################################
 ############################
 # Plot surface 3D
+# The Overall accuracy with two different factors: M and S
 # x = np.arange(35, 115, 10)
 # y = np.arange(20, 90, 10)
 # X = np.zeros((7, 8))
@@ -99,21 +105,87 @@ fig = plt.figure(num=0, figsize=(8, 4))
 ############################
 
 ################################
-ax = fig.add_subplot(111, projection='3d')
-for z in [80, 70, 60, 50, 40, 30, 20]:
-    df2 = df1[df1['S'] == z].sort_values("M")
-    m = df2["M"]
-    t1 = df2["T-pre-cpu"]
-    t2 = df2['T-pre-gpu']
-    # cs = [c]*len(m)
-    ax.bar(m-0.75, t1, zs=z, zdir='y', alpha=0.7, color='black', width=1.5, label='CPU_predict')
-    ax.bar(m+0.75, t2, zs=z, zdir='y', alpha=1.0, width=1.5, color='white',edgecolor='black', hatch="//",
-           label='GPU_predict')
-ax.set_xticks(np.arange(35, 115, 10))
-ax.set_xlabel("M")
-ax.set_ylabel("S")
-ax.set_zlabel("Time(s)")
-ax.legend(loc=2)
+# 3d bar plot
+# predict time in CPU and GPU -OCNN
+# ax = fig.add_subplot(111, projection='3d')
+# for z in [80, 70, 60, 50, 40, 30, 20]:
+#     df2 = df1[df1['S'] == z].sort_values("M")
+#     m = df2["M"]
+#     t1 = df2["T-pre-cpu"]
+#     t2 = df2['T-pre-gpu']
+#     # cs = [c]*len(m)
+#     ax.bar(m-0.75, t1, zs=z, zdir='y', alpha=0.7, color='black', width=1.5, label='CPU_predict')
+#     ax.bar(m+0.75, t2, zs=z, zdir='y', alpha=1.0, width=1.5, color='white',edgecolor='black', hatch="//",
+#            label='GPU_predict')
+# ax.set_xticks(np.arange(35, 115, 10))
+# ax.set_xlabel("M")
+# ax.set_ylabel("S")
+# ax.set_zlabel("Time(s)")
+# ax.legend(loc=2)
+# plt.show()
+###################################################
+##################################################
+# # # # # Bar Plot
+# Overall accuracy and Kappa comparison between MLP CNN OCNN and obejct oriented.
+
+# mlp_oa = df2[1][0]
+# mlp_kappa = df2[1][1]
+# print('Mlp Overall Accuracy:{} and Kappa:{}'.format(mlp_oa, mlp_kappa))
+#
+# cnn_oa = df['OA'][1]
+# cnn_kappa = df['K'][1]
+# print('Best_CNN Overall Accuracy:{} and Kappa:{}'.format(cnn_oa, cnn_kappa))
+#
+# ocnn_oa = df1[(df1['M'] == 45) & (df1["S"] == 30)]['OA'].values
+# ocnn_kappa = df1[(df1['M'] == 45) & (df1["S"] == 30)]['KAPPA'].values
+# print('Best_OCNN Overall Accuracy:{} and Kappa:{}'.format(ocnn_oa, ocnn_kappa))
+#
+# svm_oa = df3['OA'][0]
+# svm_kappa = df3["KAPPA"][0]
+# print('SVM Overall Accuracy:{} and Kappa:{}'.format(svm_oa, svm_kappa))
+#
+# barWidth = 0.25
+# r1 = np.arange(0, 4, 1)
+# r2 = [r + barWidth for r in r1]
+# plt.bar(r1, [mlp_oa, cnn_oa, ocnn_oa, svm_oa], width=barWidth, label="OA", color='black', alpha=.8)
+# plt.bar(r2, [mlp_kappa, cnn_kappa, ocnn_kappa, svm_kappa], width=barWidth, label='KAPPA',
+#         alpha=1.0, color='white', edgecolor='black', hatch="//")
+# plt.xticks([r+0.125 for r in np.arange(0, 4, 1)], ["MLP", "CNN", "OCNN", "SVM-OBJECT"])
+# plt.ylim([0.6, 1])
+# plt.xlabel("Classifiers")
+# plt.ylabel("OA & KAPPA")
+# plt.legend(loc=1, prop={'size': 12})
+# plt.show()
+###########################################################
+################################################
+
+time_segmentation = df4['Segmentation']
+print(time_segmentation)
+
+time_feature_extraction = df4['Feature Extraction']
+print(time_feature_extraction)
+
+time_training = df4['Training']
+print(time_training)
+
+time_predicting = df4['Predicting']
+print(time_predicting)
+
+ind = np.arange(0, 4, 1)
+barWidth = 0.5
+
+# hatch {'/', '\', '|', '-', '+', 'x', 'o', 'O', '.', '*'}
+plt.bar(ind, time_segmentation, color='red', edgecolor='black', width=barWidth, label='Segmentation', hatch='+')
+plt.bar(ind, time_feature_extraction, color='yellow', edgecolor='black', width=barWidth, bottom=time_segmentation,
+        label='Feature Extraction', hatch='*')
+plt.bar(ind, time_training, color='green', edgecolor='black', width=barWidth, bottom=time_segmentation +
+        time_feature_extraction, label='Training', hatch='\\')
+plt.bar(ind, time_predicting, color='blue', edgecolor='black', alpha = 0.8, width=barWidth, bottom=time_training +
+        time_segmentation + time_feature_extraction, label='Predicting', hatch='/')
+
+plt.xticks(ind, df4['Models'])
+plt.ylabel("Time(s)")
+plt.legend(loc=1)
 plt.show()
 
 # # 3D plot B & M & OA KAPPA COF

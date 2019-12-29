@@ -318,8 +318,8 @@ def plot_region_image_classification_result_prob(predict_mat_path):
 # Using CNN model to predict each segments and obtain accordingly predict value and probabilities.
 # Return segments shapefiles and add two field value, predicts and prob.
 # In order to save into shape file,segment.to_file(file_path)
-def get_predicts_segments(segments_path, image_mat_path, norma_methods, m, model,
-                          ):
+def get_predicts_segments(segments_path, raster_data_path, test_data_path, image_mat_path, norma_methods, m, model,
+                          filename):
     segments = gpd.read_file(segments_path)
     print("Step1: Begin Generating Centroid and Predicting...")
     t1 = time.clock()
@@ -355,39 +355,58 @@ def get_predicts_segments(segments_path, image_mat_path, norma_methods, m, model
     print("    Predicting time {}".format(T))
     # print("    Predicting Finish!!!")
     predicts = np.argmax(press, axis=-1) + 1
-    # number = len(predicts)
-    # print("Number of Segments: {}".format(number))
-    # prob = np.max(press, axis=1)
+    number = len(predicts)
+    print("Number of Segments: {}".format(number))
+    prob = np.max(press, axis=1)
 
-    # print("Step2: Start Saving Predicts and Probabilities...")
-    # segments['predicts'] = predicts
-    # segments['prob'] = prob
-    # print("    Save Results into Shapefiles Success!!")
-    # segments.to_file(filename)
-    # print("    Check Shapefile in {}".format(filename))
-    #
-    # print("Step3: Begin Rasterilizing Shapefiles into Raster and Test...")
-    # predicts, index = vectors_to_raster(vector_data_path=filename, raster_data_path=raster_data_path, field="predicts")
-    # oa, kappa = get_test_segments(data_path=image_mat_path, test_data_path=test_data_path, predicts=predicts)
-    # del predicts, pres, press, samples, segments
-    return T, predicts
+    print("Step2: Start Saving Predicts and Probabilities...")
+    segments['predicts'] = predicts
+    segments['prob'] = prob
+    print("    Save Results into Shapefiles Success!!")
+    segments.to_file(filename)
+    print("    Check Shapefile in {}".format(filename))
+
+    print("Step3: Begin Rasterilizing Shapefiles into Raster and Test...")
+    predicts, index = vectors_to_raster(vector_data_path=filename, raster_data_path=raster_data_path, field="predicts")
+    oa, kappa = get_test_segments(data_path=image_mat_path, test_data_path=test_data_path, predicts=predicts)
+    del predicts, pres, press, samples, segments
     # prob, index = vectors_to_raster(vector_data_path=filename, raster_data_path=raster_data_path, field='prob')
 
-    # print("Step4: Start Plotting Classification and Confidence Map")
-    # ax1 = plt.subplot(121)
-    # plot_predicts(predicts)
-    # ax1.set_xlabel("Classification Predict Map")
-    #
-    # ax2 = plt.subplot(122)
-    # segments.plot(column='prob', cmap='YlOrRd_r', ax=ax2, legend=True)
-    # # plt.imshow(prob, cmap='Greys')
-    # ax2.set_xticks([])
-    # ax2.set_yticks([])
-    # ax2.set_xlabel("Classification Confidence Map")
-    # # plt.colorbar()
-    # # plt.axis('off')
-    # plt.show()
-    # print("ALL TASK FINISH!!!")
+    print("Step4: Start Plotting Classification and Confidence Map")
+    ax1 = plt.subplot(121)
+    plot_predicts(predicts)
+    ax1.set_xlabel("Classification Predict Map")
+
+    ax2 = plt.subplot(122)
+    segments.plot(column='prob', cmap='YlOrRd_r', ax=ax2, legend=True)
+    # plt.imshow(prob, cmap='Greys')
+    ax2.set_xticks([])
+    ax2.set_yticks([])
+    ax2.set_xlabel("Classification Confidence Map")
+    plt.colorbar()
+    plt.axis('off')
+    plt.show()
+    print("ALL TASK FINISH!!!")
+    return oa, kappa
+
+
+def plot_segments_predicts_prob(segment_path, raster_data_path, field='predicts'):
+    predicts, index = vectors_to_raster(vector_data_path=segment_path, raster_data_path=raster_data_path,
+                                        field=field)
+    segments = gpd.read_file(segment_path)
+    ax1 = plt.subplot(121)
+    plot_predicts(predicts)
+    ax1.set_xlabel("Classification Predict Map")
+
+    ax2 = plt.subplot(122)
+    segments.plot(column='prob', cmap='YlOrRd_r', ax=ax2, legend=True)
+    # plt.imshow(prob, cmap='Greys')
+    ax2.set_xticks([])
+    ax2.set_yticks([])
+    ax2.set_xlabel("Classification Confidence Map")
+    # plt.colorbar()
+    # plt.axis('off')
+    plt.show()
 
 
 # Get test accuracy from the segment predict
