@@ -26,14 +26,14 @@ c = 7
 
 # segments = gpd.read_file(filename=pwd + r"images/WORKSPACE/New Workspace/GF2_4314_GS_3008053_predicts.shp")
 # print(segments.columns)
-predicts, index = vectors_to_raster(vector_data_path=pwd +
-                                    r"images/WORKSPACE/New Workspace/GF2_4314_GS_3008053_predicts.shp",
-                                    raster_data_path=file_path, field='predicts')
-oa, kappa = get_test_segments(data_path=mat_images_path, test_data_path=mat_labels_path_1, predicts=predicts,
-                              norma_methods="min-max")
-
-plot_segments_predicts_prob(segment_path=pwd + r"images/WORKSPACE/New Workspace/GF2_4314_GS_3008053_predicts.shp",
-                            raster_data_path=file_path, field='predicts')
+# predicts, index = vectors_to_raster(vector_data_path=pwd +
+#                                     r"images/WORKSPACE/New Workspace/GF2_4314_GS_3008053_predicts.shp",
+#                                     raster_data_path=file_path, field='predicts')
+# oa, kappa = get_test_segments(data_path=mat_images_path, test_data_path=mat_labels_path_1, predicts=predicts,
+#                               norma_methods="min-max")
+#
+# plot_segments_predicts_prob(segment_path=pwd + r"images/WORKSPACE/New Workspace/GF2_4314_GS_3008053_predicts.shp",
+#                             raster_data_path=file_path, field='predicts')
 
 # predicts, index = vectors_to_raster(vector_data_path=pwd + r"images/WORKSPACE/GF2_4314_GS_3_predicts1.shp",
 #                                     raster_data_path=file_path, field='predicts')
@@ -264,35 +264,35 @@ plot_segments_predicts_prob(segment_path=pwd + r"images/WORKSPACE/New Workspace/
 
 # #
 # #
-# train_samples, train_labels = get_train_sample(data_path=mat_images_path, train_data_path=mat_labels_path,
-#                                                c=c, norma_methods="min-max", m=1)
-# print(train_samples.shape, train_labels.shape)
-# # # #
-# model1 = tf.keras.models.Sequential([tf.keras.layers.Dense(32, activation='relu', input_shape=(4,)),
-#                                      tf.keras.layers.Dropout(0.1),
-#                                      tf.keras.layers.Dense(16, activation='relu'),
-#                                      tf.keras.layers.Dropout(0.1),
-#                                      tf.keras.layers.Dense(7, activation='softmax')])
+train_samples, train_labels = get_train_sample(data_path=mat_images_path, train_data_path=mat_labels_path,
+                                               c=c, norma_methods="min-max", m=1)
+print(train_samples.shape, train_labels.shape)
 # # #
-# model1.compile(optimizer=tf.keras.optimizers.Adam(lr=0.01), loss='categorical_crossentropy', metrics=['accuracy'])
-# model1.summary()
-# t1 = time.clock()
-# model1.fit(train_samples, train_labels, batch_size=30, epochs=500)
-# t2 = time.clock()
-# print("Training Time Consuming: {}".format(t2-t1))
-#
-# bands_data, is_train, _ = get_mat_info(mat_data_path=mat_images_path, train_mat_data_path=mat_region_path)
-# bands_data = norma_data(bands_data, norma_methods="min-max")
-# index = np.array(is_train).transpose((1, 0))
-# samples = []
-# t3 = time.clock()
-# for i in index:
-#     sample = bands_data[i[0], i[1]]
-#     samples.append(sample)
-# samples = np.stack(samples)
-# predicts = model1.predict(samples)
-# t4 = time.clock()
-# print("Predicting Time Consuming: {} ".format(t4-t3))
+model1 = tf.keras.models.Sequential([tf.keras.layers.Dense(32, activation='relu', input_shape=(4,)),
+                                     tf.keras.layers.Dropout(0.1),
+                                     tf.keras.layers.Dense(16, activation='relu'),
+                                     tf.keras.layers.Dropout(0.1),
+                                     tf.keras.layers.Dense(7, activation='softmax')])
+# #
+model1.compile(optimizer=tf.keras.optimizers.Adam(lr=0.01), loss='categorical_crossentropy', metrics=['accuracy'])
+model1.summary()
+t1 = time.clock()
+model1.fit(train_samples, train_labels, batch_size=30, epochs=500)
+t2 = time.clock()
+print("Training Time Consuming: {}".format(t2-t1))
+
+bands_data, is_train, _ = get_mat_info(mat_data_path=mat_images_path, train_mat_data_path=mat_region_path)
+bands_data = norma_data(bands_data, norma_methods="min-max")
+index = np.array(is_train).transpose((1, 0))
+samples = []
+t3 = time.clock()
+for i in index:
+    sample = bands_data[i[0], i[1]]
+    samples.append(sample)
+samples = np.stack(samples)
+predicts = model1.predict(samples)
+t4 = time.clock()
+print("Predicting Time Consuming: {} ".format(t4-t3))
 
 # model1 = tf.keras.models.load_model()
 # write_region_predicts(model1, image_data_path=mat_images_path, region_data_path=mat_region_path,
