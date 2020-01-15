@@ -14,16 +14,16 @@ df4 = pd.read_excel(file_path, sheet_name='Time')
 fig = plt.figure(num=0, figsize=(8, 4))
 
 ########
-# Bar plot on Time!!!
-# predict and train time of CNN
+# # Bar plot on Time!!!
+# # predict and train time of CNN
 # barWidth = 0.25
-# bar1 = list(df["T-train-gpu"])
-# # bar3 = list(df["T-pre-gpu"]/60)
+# # bar1 = list(df["T-train-gpu"]/60)
+# bar3 = list(df["T-pre-gpu"]/60)
 #
 # # print(bar1)
 # # bar11 = list(df_1d["KAPPA"])
-# bar2 = list(df["T-train-cpu"])
-# # bar4 = list(df["T-pre-cpu"]/60)
+# # bar2 = list(df["T-train-cpu"]/60)
+# bar4 = list(df["T-pre-cpu"]/60)
 #
 # # print(bar2)
 # # bar22 = list(df_mlp["KAPPA"])
@@ -34,20 +34,20 @@ fig = plt.figure(num=0, figsize=(8, 4))
 # # r3 = [x + barWidth for x in r2]
 # # r4 = [x + barWidth for x in r3]
 #
-# plt.bar(r1, bar1, color='black', width=barWidth, edgecolor='white', label='train_gpu', alpha=0.7)
-# # plt.bar(r1, bar3, color='black', width=barWidth, edgecolor='white', label='predict_gpu', alpha=0.7)
-# # plt.bar(r2, bar4, color='grey', width=barWidth, edgecolor='white', label='predict_cpu', alpha=0.7)
-# plt.bar(r2, bar2, color='grey', width=barWidth, edgecolor='white', label='train-cpu', alpha=0.7)
+# # plt.bar(r1, bar1, color='black', width=barWidth, edgecolor='white', label='train_gpu', alpha=0.7)
+# plt.bar(r1, bar3, color='black', width=barWidth, edgecolor='white', label='predict_gpu', alpha=0.7)
+# plt.bar(r2, bar4, color='grey', width=barWidth, edgecolor='white', label='predict_cpu', alpha=0.7)
+# # plt.bar(r2, bar2, color='grey', width=barWidth, edgecolor='white', label='train-cpu', alpha=0.7)
 #
 # # plt.xlabel('M', fontweight='bold')
-# plt.ylabel("Time(s)", fontweight='bold')
+# # plt.ylabel("Time(s)", fontweight='bold')
 # plt.ylabel("Time(min)", fontweight='bold')
 #
 # plt.xticks([r+0.15 for r in np.arange(0, 9, 1)], ["35x35", "45x45", "55x55", "65x65",
 #                                                   "75x75", "85x85", "95x95", "105x105"])
-# plt.yticks([0, 160, 1000, 2000, 3000, 4000])
+# # plt.yticks([0, 3, 10, 20, 30, 40, 50, 60, 70])
 # # plt.ylim(0.5, 1.0)
-# plt.hlines(y=160, xmin=-1, xmax=8, color='red', linestyles='dashed')
+# # plt.hlines(y=3, xmin=-1, xmax=8, color='red', linestyles='dashed')
 # plt.legend(loc=2, prop={'size': 12})
 #
 # plt.show()
@@ -106,7 +106,7 @@ fig = plt.figure(num=0, figsize=(8, 4))
 
 ################################
 # 3d bar plot
-# predict time in CPU and GPU -OCNN
+# # predict time in CPU and GPU -OCNN
 # ax = fig.add_subplot(111, projection='3d')
 # for z in [80, 70, 60, 50, 40, 30, 20]:
 #     df2 = df1[df1['S'] == z].sort_values("M")
@@ -159,35 +159,35 @@ fig = plt.figure(num=0, figsize=(8, 4))
 ###########################################################
 ################################################
 
-time_segmentation = df4['Segmentation']
-print(time_segmentation)
-
-time_feature_extraction = df4['Feature Extraction']
-print(time_feature_extraction)
-
-time_training = df4['Training']
-print(time_training)
-
-time_predicting = df4['Predicting']
-print(time_predicting)
-
-ind = np.arange(0, 4, 1)
-barWidth = 0.5
-
-# hatch {'/', '\', '|', '-', '+', 'x', 'o', 'O', '.', '*'}
-plt.bar(ind, time_segmentation, color='red', edgecolor='black', width=barWidth, label='Segmentation', hatch='+')
-plt.bar(ind, time_feature_extraction, color='yellow', edgecolor='black', width=barWidth, bottom=time_segmentation,
-        label='Feature Extraction', hatch='*')
-plt.bar(ind, time_training, color='green', edgecolor='black', width=barWidth, bottom=time_segmentation +
-        time_feature_extraction, label='Training', hatch='\\')
-plt.bar(ind, time_predicting, color='blue', edgecolor='black', alpha = 0.8, width=barWidth, bottom=time_training +
-        time_segmentation + time_feature_extraction, label='Predicting', hatch='/')
-
-plt.xticks(ind, df4['Models'])
-plt.ylabel("Time(s)")
-plt.legend(loc=1)
-plt.show()
-
+# time_segmentation = df4['Segmentation']
+# print(time_segmentation)
+#
+# time_feature_extraction = df4['Feature Extraction']
+# print(time_feature_extraction)
+#
+# time_training = df4['Training']
+# print(time_training)
+#
+# time_predicting = df4['Predicting']
+# print(time_predicting)
+#
+# ind = np.arange(0, 4, 1)
+# barWidth = 0.5
+#
+# # hatch {'/', '\', '|', '-', '+', 'x', 'o', 'O', '.', '*'}
+# plt.bar(ind, time_segmentation, color='red', edgecolor='black', width=barWidth, label='Segmentation', hatch='+')
+# plt.bar(ind, time_feature_extraction, color='yellow', edgecolor='black', width=barWidth, bottom=time_segmentation,
+#         label='Feature Extraction', hatch='*')
+# plt.bar(ind, time_training, color='green', edgecolor='black', width=barWidth, bottom=time_segmentation +
+#         time_feature_extraction, label='Training', hatch='\\')
+# plt.bar(ind, time_predicting, color='blue', edgecolor='black', alpha = 0.8, width=barWidth, bottom=time_training +
+#         time_segmentation + time_feature_extraction, label='Predicting', hatch='/')
+#
+# plt.xticks(ind, df4['Models'])
+# plt.ylabel("Time(s)")
+# plt.legend(loc=1)
+# plt.show()
+##################################################
 # # 3D plot B & M & OA KAPPA COF
 # DATA = ["IP", "P", "PU", "KSC"]
 # index = ["OA", "KAPPA", "Cof1", "Cof2", "Cof3"]
