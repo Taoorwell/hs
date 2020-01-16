@@ -1,17 +1,26 @@
 import pandas as pd
 import numpy as np
+from python_gdal import *
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from mpl_toolkits.mplot3d import axes3d
 
+pwd = r"D:/JL/"
 file_path = "D:/JL/model/Results.xlsx"
 df = pd.read_excel(file_path, sheet_name="CNN")
 df1 = pd.read_excel(file_path, sheet_name="OCNN")
 df2 = pd.read_excel(file_path, sheet_name="MLP")
 df3 = pd.read_excel(file_path, sheet_name='SVM-OBJECT')
 df4 = pd.read_excel(file_path, sheet_name='Time')
+file_path = pwd + r"images/GF2_4314_GS_2.dat"
 # print(df)
 fig = plt.figure(num=0, figsize=(8, 4))
+
+# Mat path
+l = ['MLP_PRE', 'CNN_45_REGION_PRE',
+     'GF2_4314_GS_3008053_predicts.shp',
+     'GF2_4314_GS_45_300805_result.shp']
+mat_path = r"D:/JL/model/cpu/mat/"
 
 ########
 # # Bar plot on Time!!!
@@ -191,28 +200,67 @@ fig = plt.figure(num=0, figsize=(8, 4))
 # # 3D plot B & M & OA KAPPA COF
 # DATA = ["IP", "P", "PU", "KSC"]
 # index = ["OA", "KAPPA", "Cof1", "Cof2", "Cof3"]
-# for i in range(0, 4):
-#     df_pca = df[(df["DATA"] == DATA[i]) & (df["Model_Category"] == "CNN_2D_PCA")]
-#     for j in range(0, 5):
-#         ax = plt.subplot2grid((4, 5), (i, j), projection="3d")
-#         # ax = Axes3D(fig)
-#         for c, z in zip(["r", "g", "c", "y", "b"], [1, 3, 5, 7, 9]):
-#             df1 = df_pca[df_pca["B"] == z].sort_values("M")
-#             m = list(df1["M"])
-#             oa = list(df1[index[j]])
-#             cs = [c] * len(m)
-#             # cs[0] = "c"
-#             ax.bar(m, oa, zs=z, zdir='y', color=cs, alpha=0.8, width=1.5)
-#         ax.set_xticks(np.arange(5, 42, 4))
-#         ax.set_yticks(np.arange(1, 10, 2))
-#         ax.tick_params(axis='both', labelsize=6)
-#         ax.set_xlabel("M", fontsize=8)
-#         ax.set_ylabel("B", fontsize=8)
-#         ax.set_zlabel(index[j], fontsize=8)
-#         print(i, j)
-#         print(df_pca)
-# # ax.set_zlim()
 
+################################################################
+def plot_1(result):
+    arr_2d = result
+    arr_3d = np.zeros((arr_2d.shape[0], arr_2d.shape[1], 3), dtype=np.uint8)
+    for c, i in palette.items():
+        m = arr_2d == c
+        arr_3d[m] = i
+    ax.imshow(arr_3d)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    C1 = mpatches.Patch(color='Magenta', label='KYL')
+    C2 = mpatches.Patch(color='Lime', label='ZLD')
+    C3 = mpatches.Patch(color='ForestGreen', label='SML')
+    C4 = mpatches.Patch(color='Red', label='MWS')
+    C5 = mpatches.Patch(color='Coral', label='CFJD')
+    C6 = mpatches.Patch(color='DeepSkyBlue', label='SLD')
+    C7 = mpatches.Patch(color='Cyan', label='WCLD')
+    # ax.legend(handles=[C1, C2, C3, C4, C5, C6, C7])
+
+
+for i in range(0, 2): # df_pca = df[(df["DATA"] == DATA[i]) & (df["Model_Category"] == "CNN_2D_PCA")]
+    for j in range(0, 4):
+        ax = plt.subplot2grid((2, 4), (i, j))
+        if (i == 0) & (j < 2):
+            print(i, j)
+            result = get_mat(mat_data_path=mat_path+l[j])
+            plot_1(result=result[:, :, 0])
+            # ax.set_title("{}{}".format(i, j))
+            print(l[j])
+        if (i == 0) & (j >= 2):
+            print(i, j)
+            predicts, index = vectors_to_raster(vector_data_path=mat_path+l[j], raster_data_path=file_path,
+                                                field='predicts')
+            plot_1(predicts)
+            print(l[j])
+        if (i == 1) & (j < 2):
+            print(i, j)
+            result = get_mat(mat_data_path=mat_path+l[j])
+            prob = result[:, :, 1]
+            prob[prob == 0] = np.nan
+            ax.imshow(prob, cmap='YlOrRd_r')
+            ax.set_xticks([])
+            ax.set_yticks([])
+            print(l[j])
+            # ax.colorbar()
+        if (i == 1) & (j >= 2):
+            print(i, j)
+            segments = gpd.read_file(mat_path+l[j])
+            segments.plot(column='prob', cmap='YlOrRd_r', ax=ax, legend=False)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            print(l[j])
+plt.savefig(mat_path+'all1.pdf', dpi=100)
+plt.show()
+###################################################################################
+
+
+#################################################
+# plot_region_image_classification_result_prob(predict_mat_path=mat_path+l[0])
+# plt.show()
 # plt.show()
 # DATA = ["IP", "P", "PU", "KSC"]
 # index = ["OA", "KAPPA", "Cof1", "Cof2", "Cof3"]
@@ -349,3 +397,6 @@ fig = plt.figure(num=0, figsize=(8, 4))
 # # plt.pcolormesh(m, b, oa)
 # # plt.colorbar()
 # # plt.contourf(m, b, oa, 30)
+# plot_region_image_classification_result_prob(predict_mat_path=mat_path+l[1])
+# plot_segments_predicts_prob(segment_path=mat_path+l[2], raster_data_path=file_path)
+# plt.show()

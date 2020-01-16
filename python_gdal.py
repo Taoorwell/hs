@@ -302,17 +302,17 @@ def plot_region_image_classification_result_prob(predict_mat_path):
     result = get_mat(predict_mat_path)
     plt.subplot(121)
     plot_predicts(result[:, :, 0])
-    plt.xlabel("Classification Predict Map")
+    # plt.xlabel("Classification Predict Map")
     plt.subplot(122)
     prob = result[:, :, 1]
     prob[prob == 0] = np.nan
     plt.imshow(prob, cmap='YlOrRd_r')
     plt.xticks([])
     plt.yticks([])
-    plt.xlabel("Classification Confidence Map")
+    # plt.xlabel("Classification Confidence Map")
     plt.colorbar()
     # plt.axis('off')
-    plt.show()
+    # plt.show()
 
 
 # Using CNN model to predict each segments and obtain accordingly predict value and probabilities.
@@ -396,17 +396,17 @@ def plot_segments_predicts_prob(segment_path, raster_data_path, field='predicts'
     segments = gpd.read_file(segment_path)
     ax1 = plt.subplot(121)
     plot_predicts(predicts)
-    ax1.set_xlabel("Classification Predict Map")
+    # ax1.set_xlabel("Classification Predict Map")
 
     ax2 = plt.subplot(122)
     segments.plot(column='prob', cmap='YlOrRd_r', ax=ax2, legend=True)
     # plt.imshow(prob, cmap='Greys')
     ax2.set_xticks([])
     ax2.set_yticks([])
-    ax2.set_xlabel("Classification Confidence Map")
+    # ax2.set_xlabel("Classification Confidence Map")
     # plt.colorbar()
     # plt.axis('off')
-    plt.show()
+    # plt.show()
 
 
 # Get test accuracy from the segment predict
