@@ -6,21 +6,37 @@ from matplotlib import cm
 from mpl_toolkits.mplot3d import axes3d
 
 pwd = r"D:/JL/"
-file_path = "D:/JL/model/Results.xlsx"
-df = pd.read_excel(file_path, sheet_name="CNN")
-df1 = pd.read_excel(file_path, sheet_name="OCNN")
-df2 = pd.read_excel(file_path, sheet_name="MLP")
-df3 = pd.read_excel(file_path, sheet_name='SVM-OBJECT')
-df4 = pd.read_excel(file_path, sheet_name='Time')
-file_path = pwd + r"images/GF2_4314_GS_2.dat"
+file_path = "D:/JL/model/results.xlsx"
+#df = pd.read_excel(file_path, sheet_name="CNN")
+#df1 = pd.read_excel(file_path, sheet_name="OCNN")
+#df2 = pd.read_excel(file_path, sheet_name="MLP")
+#df3 = pd.read_excel(file_path, sheet_name='SVM-OBJECT')
+#df4 = pd.read_excel(file_path, sheet_name='Time')
+#file_path = pwd + r"images/GF2_4314_GS_2.dat"
 # print(df)
 fig = plt.figure(num=0, figsize=(8, 4))
 
-# Mat path
-l = ['MLP_PRE', 'CNN_45_REGION_PRE',
-     'GF2_4314_GS_3008053_predicts.shp',
-     'GF2_4314_GS_45_300805_result.shp']
-mat_path = r"D:/JL/model/cpu/mat/"
+#  path
+#l = ['MLP_PRE', 'CNN_45_REGION_PRE',
+#     'GF2_4314_GS_3008053_predicts.shp',
+#     'GF2_4314_GS_45_300805_result.shp']
+#mat_path = r"D:/JL/model/cpu/mat/"
+
+df = pd.read_excel(file_path, sheet_name='sheet2')
+print(df)
+
+position = [(0,0), (0,1), (0,2), (1,0), (1,1), (1,2), (2,0)]
+for p, c in zip(position, range(1, 8)):
+    ax = plt.subplot2grid((3, 3), p)
+    ax.bar(df['m'], df[c], color='white', edgecolor='black', width=5,label='f1-score',hatch='//')
+    plt.xticks(np.arange(35, 115, 10), ["35x35", "45x45", "55x55", "65x65",
+                                         "75x75", "85x85", "95x95", "105x105"], fontsize=7)
+    ax.set_ylim([0.2, 1.1])
+    plt.yticks(fontsize=7)
+    ax.set_xlabel('m')
+    ax.set_ylabel('f1')
+    ax.legend()
+plt.show()
 
 ########
 # # Bar plot on Time!!!
@@ -202,60 +218,73 @@ mat_path = r"D:/JL/model/cpu/mat/"
 # index = ["OA", "KAPPA", "Cof1", "Cof2", "Cof3"]
 
 ################################################################
-def plot_1(result):
-    arr_2d = result
-    arr_3d = np.zeros((arr_2d.shape[0], arr_2d.shape[1], 3), dtype=np.uint8)
-    for c, i in palette.items():
-        m = arr_2d == c
-        arr_3d[m] = i
-    ax.imshow(arr_3d)
-    ax.set_xticks([])
-    ax.set_yticks([])
-    C1 = mpatches.Patch(color='Magenta', label='KYL')
-    C2 = mpatches.Patch(color='Lime', label='ZLD')
-    C3 = mpatches.Patch(color='ForestGreen', label='SML')
-    C4 = mpatches.Patch(color='Red', label='MWS')
-    C5 = mpatches.Patch(color='Coral', label='CFJD')
-    C6 = mpatches.Patch(color='DeepSkyBlue', label='SLD')
-    C7 = mpatches.Patch(color='Cyan', label='WCLD')
+#def plot_1(result):
+#    arr_2d = result
+#    arr_3d = np.zeros((arr_2d.shape[0], arr_2d.shape[1], 3), dtype=np.uint8)
+#    for c, i in palette.items():
+#        m = arr_2d == c
+#        arr_3d[m] = i
+#    ax.imshow(arr_3d)
+#    ax.set_xticks([])
+#    ax.set_yticks([])
+#    C1 = mpatches.Patch(color='Magenta', label='KYL')
+#    C2 = mpatches.Patch(color='Lime', label='ZLD')
+#    C3 = mpatches.Patch(color='ForestGreen', label='SML')
+#    C4 = mpatches.Patch(color='Red', label='MWS')
+#    C5 = mpatches.Patch(color='Coral', label='CFJD')
+#    C6 = mpatches.Patch(color='DeepSkyBlue', label='SLD')
+#    C7 = mpatches.Patch(color='Cyan', label='WCLD')
     # ax.legend(handles=[C1, C2, C3, C4, C5, C6, C7])
 
 
-for i in range(0, 2): # df_pca = df[(df["DATA"] == DATA[i]) & (df["Model_Category"] == "CNN_2D_PCA")]
-    for j in range(0, 4):
-        ax = plt.subplot2grid((2, 4), (i, j))
-        if (i == 0) & (j < 2):
-            print(i, j)
-            result = get_mat(mat_data_path=mat_path+l[j])
-            plot_1(result=result[:, :, 0])
-            # ax.set_title("{}{}".format(i, j))
-            print(l[j])
-        if (i == 0) & (j >= 2):
-            print(i, j)
-            predicts, index = vectors_to_raster(vector_data_path=mat_path+l[j], raster_data_path=file_path,
-                                                field='predicts')
-            plot_1(predicts)
-            print(l[j])
-        if (i == 1) & (j < 2):
-            print(i, j)
-            result = get_mat(mat_data_path=mat_path+l[j])
-            prob = result[:, :, 1]
-            prob[prob == 0] = np.nan
-            ax.imshow(prob, cmap='YlOrRd_r')
-            ax.set_xticks([])
-            ax.set_yticks([])
-            print(l[j])
-            # ax.colorbar()
-        if (i == 1) & (j >= 2):
-            print(i, j)
-            segments = gpd.read_file(mat_path+l[j])
-            segments.plot(column='prob', cmap='YlOrRd_r', ax=ax, legend=False)
-            ax.set_xticks([])
-            ax.set_yticks([])
-            print(l[j])
-plt.savefig(mat_path+'all1.pdf', dpi=100)
-plt.show()
+#for i in range(0, 2): # df_pca = df[(df["DATA"] == DATA[i]) & (df["Model_Category"] == "CNN_2D_PCA")]
+#    for j in range(0, 4):
+#        ax = plt.subplot2grid((2, 4), (i, j))
+#        if (i == 0) & (j < 2):
+#            print(i, j)
+#            result = get_mat(mat_data_path=mat_path+l[j])
+#            plot_1(result=result[:, :, 0])
+#            # ax.set_title("{}{}".format(i, j))
+#            print(l[j])
+#        if (i == 0) & (j >= 2):
+#            print(i, j)
+#            predicts, index = vectors_to_raster(vector_data_path=mat_path+l[j], raster_data_path=file_path,
+#                                                field='predicts')
+#            plot_1(predicts)
+#            print(l[j])
+#        if (i == 1) & (j < 2):
+#            print(i, j)
+#            result = get_mat(mat_data_path=mat_path+l[j])
+#            prob = result[:, :, 1]
+#            prob[prob == 0] = np.nan
+#            ax.imshow(prob, cmap='YlOrRd_r')
+#            ax.set_xticks([])
+#            ax.set_yticks([])
+#            print(l[j])
+#            # ax.colorbar()
+#        if (i == 1) & (j >= 2):
+#            print(i, j)
+#            segments = gpd.read_file(mat_path+l[j])
+#            segments.plot(column='prob', cmap='YlOrRd_r', ax=ax, legend=False)
+#            ax.set_xticks([])
+#            ax.set_yticks([])
+#            print(l[j])
+#plt.savefig(mat_path+'all1.pdf', dpi=100)
+#plt.show()
 ###################################################################################
+
+ 
+
+
+
+
+
+
+
+
+
+
+
 
 
 #################################################
