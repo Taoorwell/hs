@@ -37,7 +37,7 @@ def get_raster_info(raster_data_path):
     bands_data = np.dstack(bands_data)
     bands_data = bands_data[:, :, :]
     rows, cols, n_bands = bands_data.shape
-    return rows, cols, n_bands, bands_data, geo_transform, projection
+    return bands_data
 
 
 # Read shapefiles
@@ -98,9 +98,9 @@ def get_prep_data(data_path, train_data_path, norma_method="z-score"):
 
 def get_shuffle(a, b):
 
-    state = np.random.get_state()
+    s = np.random.get_state()
     np.random.shuffle(a)
-    np.random.set_state(state)
+    np.random.set_state(s)
     np.random.shuffle(b)
     return a, b
 
@@ -468,7 +468,7 @@ def get_samples_info(labels_samples):
 # # one-hot encoding for labels, return shape of (c,1), value is form  1 to c
 # # parameter: c, number of classes, labels, train valid test label data, form is [1, 2, 1, 0, .....]
 def one_hot_encode(c, labels):
-    return np.eye(c)[[int(e-1) for e in labels]]
+    return np.eye(c)[[int(e) for e in labels]]
 
 
 # # norma bands data(whole image), calculator each bands max mean min std value to obtain norma info.
@@ -492,7 +492,7 @@ def norma_data(data, norma_methods="z-score"):
         if norma_methods == "z-score":
             new_array = (array-norma_info1[2])/norma_info1[3]
         else:
-            new_array = (2*(array-norma_info1[0])/(norma_info1[1]-norma_info1[0]))-1
+            new_array = 2*(array-norma_info1[0])/(norma_info1[1]-norma_info1[0])
         new_data.append(new_array)
     new_data = np.stack(new_data, axis=-1)
     # # for save half memory!
@@ -608,6 +608,18 @@ def split_segments_predicts(segments, save_path):
         single = segments[segments['predicts'] == i]
         single.to_file(save_path + '{}.shp'.format(i))
     print('Split Finish ' + " Check in " + save_path)
+
+
+def one_hot(data):
+    arr_3d = np.zeros((data.shape[0], data.shape[1], 2), dtype=np.uint8)
+    dic = {0: (1, 0),
+           1: (0, 1)}
+    for k, i in dic.items():
+        g = data == k
+        arr_3d[g] = i
+    return arr_3d
+
+
 
 # def create_mask_from_vector(vector_data_path, cols, rows, geo_transform,
 #                             projection, target_value=1):
@@ -801,3 +813,4 @@ def split_segments_predicts(segments, save_path):
 #     #
 #     # plt.show()
 #     return cof1, cof2, cof3
+

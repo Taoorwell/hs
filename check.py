@@ -24,10 +24,11 @@ s = [20, 30, 40, 50, 60, 70, 80]
 # m = [55, 85, 95]
 c = 7
 
-predicts, index = vectors_to_raster(vector_data_path=segments_path + r"New Workspace/GF2_4314_GS_3008053_predicts.shp",
-                                    raster_data_path=file_path, field="predicts")
-oa, kappa = get_test_segments(data_path=mat_images_path, test_data_path=mat_labels_path_1,
-                              predicts=predicts, norma_methods="min-max")
+# predicts, index =
+# vectors_to_raster(vector_data_path=segments_path + r"New Workspace/GF2_4314_GS_3008053_predicts.shp",
+#                                   raster_data_path=file_path, field="predicts")
+# oa, kappa = get_test_segments(data_path=mat_images_path, test_data_path=mat_labels_path_1,
+#                             predicts=predicts, norma_methods="min-max")
 # plot_region_image_classification_result_prob(predict_mat_path=r"D:/JL/model/cpu/mat/MLP_PRE")
 # model = tf.keras.models.load_model("D:/JL/model/gpu/GF_MODEL/valid/MLP.h5")
 # get_test_predict(model, data_path=mat_images_path, test_data_path=mat_labels_path_1,
@@ -277,13 +278,14 @@ oa, kappa = get_test_segments(data_path=mat_images_path, test_data_path=mat_labe
 # print(train_samples.shape, train_labels.shape)
 # # # #
 # model1 = tf.keras.models.Sequential([tf.keras.layers.Dense(32, activation='relu', input_shape=(4,)),
-#                                      tf.keras.layers.Dropout(0.1),
-#                                      tf.keras.layers.Dense(16, activation='relu'),
-#                                      tf.keras.layers.Dropout(0.1),
-#                                      tf.keras.layers.Dense(7, activation='softmax')])
+#                                     tf.keras.layers.Dropout(0.1),
+#                                    tf.keras.layers.Dense(16, activation='relu'),
+#                                    tf.keras.layers.Dropout(0.1),
+#                                    tf.keras.layers.Dense(7, activation='softmax')])
 # # #
 # model1.compile(optimizer=tf.keras.optimizers.Adam(lr=0.01), loss='categorical_crossentropy', metrics=['accuracy'])
 # model1.summary()
+
 # t1 = time.clock()
 # model1.fit(train_samples, train_labels, batch_size=30, epochs=500)
 # t2 = time.clock()
